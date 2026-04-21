@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulation Topic Explorer v3</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: #fff; color: #1a1a1a; padding: 1.5rem; }
+h1 { font-size: 20px; font-weight: 500; margin-bottom: 1.25rem; }
+.top { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+.tab { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 0.5px solid #ccc; background: transparent; color: #666; transition: all 0.15s; }
+.tab.active { background: #1a1a1a; color: #fff; border-color: transparent; }
+.tab:hover:not(.active) { background: #f5f5f5; }
+.section-tabs { display: flex; gap: 6px; margin-bottom: 0.75rem; }
+.stab { padding: 4px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 0.5px solid #ccc; background: transparent; color: #666; transition: all 0.15s; }
+.stab.active { background: #f0f0f0; color: #1a1a1a; font-weight: 500; }
+.filter-row { display: flex; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+.diff-btn { padding: 3px 11px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 0.5px solid #ccc; background: transparent; color: #888; transition: all 0.15s; }
+.diff-btn.on { color: #fff; border-color: transparent; }
+.diff-btn[data-d="1"].on { background: #1D9E75; }
+.diff-btn[data-d="2"].on { background: #BA7517; }
+.diff-btn[data-d="3"].on { background: #E24B4A; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 13px; cursor: pointer; transition: border-color 0.15s; }
+.card:hover { border-color: #aaa; }
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; }
+.card-name { font-size: 13px; font-weight: 500; line-height: 1.3; }
+.badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; margin-left: 6px; }
+.b1 { background: #E1F5EE; color: #085041; }
+.b2 { background: #FAEEDA; color: #633806; }
+.b3 { background: #FCEBEB; color: #791F1F; }
+.bai { background: #EEEDFE; color: #3C3489; }
+.bplat { background: #E6F1FB; color: #0C447C; }
+.bgame { background: #EAF3DE; color: #27500A; }
+.card-desc { font-size: 12px; color: #666; line-height: 1.45; margin-bottom: 8px; }
+.spec-block { margin-top: 8px; border-top: 0.5px solid #e8e8e8; padding-top: 8px; }
+.spec-row { margin-bottom: 5px; }
+.spec-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: #aaa; margin-bottom: 2px; }
+.tags { display: flex; flex-wrap: wrap; gap: 3px; }
+.tag { font-size: 11px; background: #f5f5f5; border-radius: 4px; padding: 1px 6px; color: #666; }
+.tag.bg-blue { background: #E6F1FB; color: #0C447C; }
+.tag.bg-green { background: #E1F5EE; color: #085041; }
+.tag.bg-amber { background: #FAEEDA; color: #633806; }
+.count { font-size: 12px; color: #888; margin-bottom: 0.75rem; }
+.empty { font-size: 13px; color: #888; padding: 2rem 0; text-align: center; }
+.category-label { font-size: 11px; font-weight: 500; color: #aaa; text-transform: uppercase; letter-spacing: 0.05em; margin: 1rem 0 0.4rem; grid-column: 1/-1; }
+.feature-card { border-left: 2px solid #e0e0e0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.feature-card.ai { border-left-color: #7F77DD; }
+.feature-card.platform { border-left-color: #378ADD; }
+.feature-card.gamify { border-left-color: #1D9E75; }
+</style>
+</head>
+<body>
+<h1>Simulation topic explorer</h1>
+<div class="top" id="tabs"></div>
+<div class="section-tabs" id="stabs"></div>
+<div class="filter-row" id="filters"></div>
+<div class="count" id="count"></div>
+<div class="grid" id="grid"></div>
+<script>
+const sims = {
+  Physics: [
+    { name:"Pendulum motion", diff:1, desc:"Adjust length and mass; watch period change in real time.", bg:"Dark sky gradient with a wooden ceiling beam. Bob casts a soft shadow.", tools:["Length slider (0.1–2m)","Mass slider (0.1–2kg)","Gravity selector (Moon/Earth/Jupiter)","Pause / slow-mo button"], visuals:["Animated swinging bob with motion trail","Live period timer display","v–t and KE/PE energy bar graph"], observations:["Period vs length table auto-fills as you experiment","AI flags when student discovers T∝√L","Prediction box before each run"] },
+    { name:"Projectile motion", diff:1, desc:"Set angle and speed; trace the parabolic path with live readouts.", bg:"Blue sky with a green ground plane. Grid overlay toggleable.", tools:["Launch angle dial (0–90°)","Initial speed slider","Air resistance toggle","Slow-motion replay"], visuals:["Dotted trajectory arc","Range, max height, and time callouts","Split view: with vs without air resistance"], observations:["Data table: angle → range auto-recorded","Graph: range vs angle (students discover 45° peak)","AI hint when student hasn't tried 45°"] },
+    { name:"Newton's 2nd law", diff:1, desc:"Push blocks with variable force and mass; observe acceleration.", bg:"Clean white lab surface, top-down view with a ruler gridline.", tools:["Force arrow drag (left/right)","Mass selector (1–20 kg)","Friction surface toggle (ice/wood/rubber)","Frame-by-frame stepper"], visuals:["Block slides with proportional speed","Force diagram (free body) updates live","a = F/m readout panel"], observations:["a vs F graph auto-plots at constant mass","a vs m graph at constant force","AI asks: what pattern do you see?"] },
+    { name:"Hooke's law / springs", diff:1, desc:"Stretch a spring and measure the restoring force.", bg:"White lab background, spring mounted to ceiling.", tools:["Mass hanger (add/remove weights)","Ruler overlay","Spring constant k selector","Reset to natural length button"], visuals:["Spring stretches proportionally with bounce animation","F vs x graph plots in real time","Extension measurement callout"], observations:["Auto-table: mass → extension → force","Student calculates k from slope","AI highlights elastic limit if overloaded"] },
+    { name:"Free fall & gravity", diff:1, desc:"Drop objects from height; compare with and without air resistance.", bg:"Tall building side view, sky background, ground at bottom.", tools:["Drop height slider (1–100m)","Object selector (feather/ball/cannonball)","Air resistance toggle","Slow-motion replay"], visuals:["Object falls with real speed","v–t graph animates alongside","Side-by-side comparison mode"], observations:["Time to ground recorded per object","Table: drag on vs off comparison","AI prompt: why does the feather differ?"] },
+    { name:"Wave interference", diff:2, desc:"Two wave sources produce constructive and destructive patterns.", bg:"Dark water-surface view from above, ripple rings in teal.", tools:["Frequency slider per source","Amplitude slider","Source separation drag","Wavelength colour map toggle"], visuals:["Animated ripple rings from both sources","Bright/dark nodal line overlay","Cross-section intensity graph"], observations:["Nodal line count vs frequency table","Students mark constructive/destructive points on canvas","AI explains path difference rule"] },
+    { name:"Doppler effect", diff:2, desc:"Move a sound source; watch wavelength compress and stretch.", bg:"Top-down road view, source vehicle moves left/right.", tools:["Source speed slider","Observer position drag","Frequency input (Hz)","Play/pause sound tone"], visuals:["Wavefront circles compress ahead, stretch behind","Heard frequency readout at observer","Waveform diagram updates live"], observations:["Table: speed → observed frequency","Graph: f_observed vs source velocity","Real-world example: ambulance siren"] },
+    { name:"Simple circuits", diff:2, desc:"Build series and parallel circuits; measure voltage and current.", bg:"Dark workbench surface. Components snap to a grid.", tools:["Drag-and-drop: battery, bulb, resistor, switch, wire","Multimeter probe drag","Series/parallel template buttons","Component value editor"], visuals:["Current flows as animated dots around circuit","Bulb brightness scales with power","Voltage and current readout at each node"], observations:["Auto-fills V, I, R table as circuit changes","Compares series vs parallel brightness","AI warns if circuit is shorted"] },
+    { name:"Refraction & Snell's law", diff:2, desc:"Shine a ray through two media; adjust angle and index.", bg:"Split screen: air above (light), water/glass below (dark blue).", tools:["Incident angle protractor drag","Refractive index n₂ slider","Material preset picker (water/glass/diamond)","Normal line toggle"], visuals:["Incident, refracted, and reflected rays animate","Angle labels update live","Critical angle highlighted in red"], observations:["Table: n → refraction angle","Students verify Snell's law numerically","AI shows total internal reflection demo"] },
+    { name:"Magnetic field lines", diff:2, desc:"Place bar magnets and visualise field lines around them.", bg:"White paper-texture background like a lab sheet.", tools:["Drag N/S bar magnets onto canvas","Flip polarity button","Add compass needle","Field line density toggle"], visuals:["Smooth animated field lines curve between poles","Compass needles rotate to align","Attractive/repulsive force arrows between magnets"], observations:["Students sketch predicted lines before revealing","Density of lines = field strength callout","AI explains why opposite poles attract"] },
+    { name:"Electromagnetic induction", diff:3, desc:"Move a coil through a magnetic field; induce a current.", bg:"Dark lab background. Coil on a rail, magnet region shaded.", tools:["Coil velocity slider","Number of turns selector","Magnetic field strength slider","Oscilloscope view toggle"], visuals:["EMF readout needle deflects with coil speed","Oscilloscope traces induced waveform","Field flux shading inside coil"], observations:["EMF vs velocity graph","Effect of turns on peak EMF","AI links to Faraday's law formula"] },
+    { name:"Special relativity", diff:3, desc:"Travel near light speed; visualise time dilation and length contraction.", bg:"Space background, stars streak as speed increases.", tools:["Velocity slider (0–0.99c)","Reference frame toggle (ship/observer)","Lorentz factor γ display","Twin paradox scenario button"], visuals:["Spaceship length contracts visually","Clock on ship slows vs ground clock","Space-time diagram updates live"], observations:["Table: v/c → γ → time dilation factor","Students calculate age difference in twin paradox","AI checks student's Lorentz calculation"] },
+    { name:"Quantum tunnelling", diff:3, desc:"Send a particle at a potential barrier; vary width and height.", bg:"Dark quantum-lab aesthetic, probability shown as glowing wave.", tools:["Barrier width slider","Barrier height (energy) slider","Particle energy slider","Run 100 trials button"], visuals:["Wavefunction animates through and reflects from barrier","Transmission probability % updates live","Histogram of 100-trial outcomes"], observations:["Tunnelling prob vs barrier width graph","Students discover exponential decay relationship","AI links to scanning tunnelling microscope"] },
+    { name:"Fluid dynamics (Bernoulli)", diff:3, desc:"Change pipe diameter; watch pressure and velocity trade off.", bg:"Clean engineering diagram style, pipe cross-section view.", tools:["Pipe diameter drag to narrow/widen","Flow rate slider","Fluid viscosity toggle","Pressure gauge placement"], visuals:["Animated fluid particles speed up at narrow sections","Pressure gauge needles live on pipe wall","Streamline density overlay"], observations:["V and P table at each pipe section","Students verify P + ½ρv² = constant","AI connects to aeroplane lift"] },
+    { name:"Orbital mechanics", diff:3, desc:"Launch a satellite; vary speed to achieve different orbits.", bg:"Space view of Earth from above, star field background.", tools:["Launch speed slider","Launch angle","Burn direction buttons (prograde/retrograde)","Time warp slider"], visuals:["Orbit path traces in real time","Apogee/perigee callouts","Energy (KE+PE) bar always displayed"], observations:["Table: speed → orbit type","Students find escape velocity","AI explains why ISS doesn't fall"] },
+  ]
+};
+const features = {
+  "AI upgrades": [
+    { name:"Voice tutor", cat:"ai", desc:"Students talk to the AI hands-free while running experiments.", tags:["speech API","real-time","accessibility"] },
+    { name:"Explain level toggle", cat:"ai", desc:"Switch between age-10 and university-level explanations instantly.", tags:["adaptive language","UX","prompt engineering"] },
+    { name:"What-if mode", cat:"ai", desc:"Student types a free question mid-sim; AI adjusts the simulation live.", tags:["live context","AI control","open-ended"] },
+    { name:"Auto-generated quiz", cat:"ai", desc:"After each lab, AI writes questions based on exactly what the student did.", tags:["personalised","assessment","session data"] },
+    { name:"Misconception detector", cat:"ai", desc:"Recognises wrong-answer patterns and targets the specific misconception.", tags:["knowledge gaps","feedback","learning science"] },
+    { name:"AI lab report writer", cat:"ai", desc:"AI drafts a report from student data; they edit and submit.", tags:["scientific writing","scaffolding","export"] },
+  ],
+  "Platform features": [
+    { name:"Curriculum pathfinding", cat:"platform", desc:"After each sim, AI suggests the logical next topic.", tags:["learning graph","recommendations","progression"] },
+    { name:"Lab notebook", cat:"platform", desc:"Students record observations; AI helps format them into reports.", tags:["notes","export","portfolio"] },
+    { name:"Challenge mode", cat:"platform", desc:"Sim gives a target outcome; student must find the right inputs.", tags:["problem-solving","active learning","goals"] },
+    { name:"Multiplayer labs", cat:"platform", desc:"Two students share the same simulation in real time.", tags:["WebSockets","co-op","class activity"] },
+    { name:"Teacher dashboard", cat:"platform", desc:"Heatmaps showing which simulations students struggle with.", tags:["analytics","class view","intervention"] },
+    { name:"Misconception report", cat:"platform", desc:"End-of-session summary for teachers on each student's wrong beliefs.", tags:["AI report","per-student","actionable"] },
+  ],
+  "Gamification": [
+    { name:"Badges & streaks", cat:"gamify", desc:"Earn badges for completing topic modules; streaks for daily activity.", tags:["motivation","retention","milestones"] },
+    { name:"Predict before you run", cat:"gamify", desc:"Student predicts the outcome before launching; earns bonus points.", tags:["scientific thinking","points","hypothesis"] },
+    { name:"Class leaderboard", cat:"gamify", desc:"Points rankings per class, resettable by the teacher.", tags:["competition","engagement","teacher control"] },
+    { name:"Unlock system", cat:"gamify", desc:"Advanced simulations only unlock after basics are mastered.", tags:["progression","curriculum lock","achievement"] },
+  ],
+};
+const allSubjects = Object.keys(sims);
+let activeSub = allSubjects[0], activeSection = 'simulations', activeFilters = new Set([1,2,3]);
+const tabsEl=document.getElementById('tabs'), stabsEl=document.getElementById('stabs'), filtersEl=document.getElementById('filters'), gridEl=document.getElementById('grid'), countEl=document.getElementById('count');
+function buildTabs(){tabsEl.innerHTML=allSubjects.map(s=>`<button class="tab${s===activeSub?' active':''}" onclick="setSub('${s}')">${s} <span style="font-size:10px;opacity:0.6">${sims[s].length}</span></button>`).join('');}
+function buildSectionTabs(){stabsEl.innerHTML=['simulations','features'].map(s=>`<button class="stab${activeSection===s?' active':''}" onclick="setSection('${s}')">${s==='simulations'?'Simulations':'New features'}</button>`).join('');}
+function buildFilters(){if(activeSection==='simulations'){filtersEl.innerHTML=`<span style="font-size:12px;color:#888;align-self:center;margin-right:4px;">Difficulty:</span>`+[1,2,3].map(d=>`<button class="diff-btn${activeFilters.has(d)?' on':''}" data-d="${d}">${d===1?'Easy':d===2?'Medium':'Hard'}</button>`).join('');filtersEl.querySelectorAll('.diff-btn').forEach(btn=>{btn.addEventListener('click',()=>{const d=+btn.dataset.d;if(activeFilters.has(d)){if(activeFilters.size>1)activeFilters.delete(d);}else activeFilters.add(d);buildFilters();render();});});}else{filtersEl.innerHTML='';}}
+function simCard(t){return `<div class="card"><div class="card-top"><div class="card-name">${t.name}</div><span class="badge b${t.diff}">${t.diff===1?'Easy':t.diff===2?'Medium':'Hard'}</span></div><div class="card-desc">${t.desc}</div><div class="spec-block"><div class="spec-row"><div class="spec-label">Background</div><div style="font-size:11px;color:#666;line-height:1.4">${t.bg}</div></div><div class="spec-row" style="margin-top:6px"><div class="spec-label">Controls & tools</div><div class="tags">${t.tools.map(x=>`<span class="tag bg-blue">${x}</span>`).join('')}</div></div><div class="spec-row" style="margin-top:6px"><div class="spec-label">Visuals</div><div class="tags">${t.visuals.map(x=>`<span class="tag bg-green">${x}</span>`).join('')}</div></div><div class="spec-row" style="margin-top:6px"><div class="spec-label">Observations</div><div class="tags">${t.observations.map(x=>`<span class="tag bg-amber">${x}</span>`).join('')}</div></div></div></div>`;}
+function render(){if(activeSection==='simulations'){const items=sims[activeSub].filter(t=>activeFilters.has(t.diff));countEl.textContent=`${items.length} simulation${items.length!==1?'s':''} in ${activeSub}`;gridEl.innerHTML=items.length?items.map(simCard).join(''):'<div class="empty">No simulations match this filter.</div>';}else{const all=Object.entries(features);countEl.textContent=`${all.reduce((a,[,v])=>a+v.length,0)} feature ideas across ${all.length} categories`;const catLabel={ai:'AI upgrade',platform:'Platform feature',gamify:'Gamification'},bc={ai:'bai',platform:'bplat',gamify:'bgame'};gridEl.innerHTML=all.map(([group,items])=>`<div class="category-label">${group}</div>`+items.map(f=>`<div class="card feature-card ${f.cat}"><div class="card-top"><div class="card-name">${f.name}</div><span class="badge ${bc[f.cat]}">${catLabel[f.cat]}</span></div><div class="card-desc">${f.desc}</div><div class="spec-block"><div class="tags">${f.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div></div></div>`).join('')).join('');}}
+window.setSub=s=>{activeSub=s;activeSection='simulations';buildTabs();buildSectionTabs();buildFilters();render();};
+window.setSection=s=>{activeSection=s;buildSectionTabs();buildFilters();render();};
+buildTabs();buildSectionTabs();buildFilters();render();
+</script>
+</body>
+</html>
