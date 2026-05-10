@@ -21,10 +21,11 @@ const MagneticFieldSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode
         if (!canvasRef.current) return;
         const engine = new BABYLON.Engine(canvasRef.current, true, { preserveDrawingBuffer: true, stencil: true });
         const scene = new BABYLON.Scene(engine);
-        scene.clearColor = new BABYLON.Color4(0.01, 0.02, 0.04, 1);
+        scene.clearColor = new BABYLON.Color4(0.01, 0.02, 0.05, 1);
 
-        createLabEnvironment(scene, { gridSize: 25, showGrid: true });
-        createLabLighting(scene, { intensity: 0.9 });
+        const envPreset = 'LAB_WHITE';
+        createLabEnvironment(scene, { preset: envPreset, gridSize: 25, showGrid: true });
+        createLabLighting(scene, { preset: envPreset, intensity: 1.0 });
         createLabCamera(scene, BABYLON.Vector3.Zero(), { radius: 30 });
 
         const northMat = new BABYLON.StandardMaterial("nm", scene);

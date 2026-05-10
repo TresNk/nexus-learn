@@ -2,12 +2,42 @@ import * as BABYLON from '@babylonjs/core';
 
 export const createLabEnvironment = (scene, options = {}) => {
     const {
+        preset = 'LAB_DARK',
         gridSize = 40,
-        groundColor = new BABYLON.Color3(0.02, 0.03, 0.05),
-        gridColor = new BABYLON.Color3(0.08, 0.12, 0.18),
         showGrid = true,
         showAxis = false
     } = options;
+
+    let groundColor, gridColor, emissiveColor;
+
+    switch (preset) {
+        case 'OUTDOOR':
+            groundColor = new BABYLON.Color3(0.1, 0.35, 0.1); // Grass green
+            gridColor = new BABYLON.Color3(0.2, 0.5, 0.2);
+            emissiveColor = new BABYLON.Color3(0.02, 0.05, 0.02);
+            break;
+        case 'LAB_WHITE':
+            groundColor = new BABYLON.Color3(0.95, 0.95, 0.98);
+            gridColor = new BABYLON.Color3(0.8, 0.8, 0.85);
+            emissiveColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+            break;
+        case 'WATER':
+            groundColor = new BABYLON.Color3(0.01, 0.1, 0.15); // Deep teal
+            gridColor = new BABYLON.Color3(0.05, 0.25, 0.3);
+            emissiveColor = new BABYLON.Color3(0.01, 0.05, 0.08);
+            break;
+        case 'SPACE':
+            groundColor = new BABYLON.Color3(0, 0, 0);
+            gridColor = new BABYLON.Color3(0.1, 0.1, 0.2);
+            emissiveColor = new BABYLON.Color3(0, 0, 0);
+            break;
+        case 'LAB_DARK':
+        default:
+            groundColor = new BABYLON.Color3(0.02, 0.03, 0.05);
+            gridColor = new BABYLON.Color3(0.08, 0.12, 0.18);
+            emissiveColor = new BABYLON.Color3(0.01, 0.015, 0.02);
+            break;
+    }
 
     // Ground with custom material
     const ground = BABYLON.MeshBuilder.CreateGround("ground", { 
@@ -19,7 +49,7 @@ export const createLabEnvironment = (scene, options = {}) => {
     const groundMat = new BABYLON.StandardMaterial("groundMat", scene);
     groundMat.diffuseColor = groundColor;
     groundMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.03);
-    groundMat.emissiveColor = new BABYLON.Color3(0.01, 0.015, 0.02);
+    groundMat.emissiveColor = emissiveColor;
     ground.material = groundMat;
 
     // Grid lines
@@ -43,7 +73,7 @@ export const createLabEnvironment = (scene, options = {}) => {
         gridLines.forEach((points, idx) => {
             const line = BABYLON.MeshBuilder.CreateLines("gridLine" + idx, { points }, scene);
             line.color = gridColor;
-            line.alpha = 0.4;
+            line.alpha = preset === 'LAB_WHITE' ? 0.2 : 0.4;
         });
     }
 
@@ -69,13 +99,21 @@ export const createLabEnvironment = (scene, options = {}) => {
 };
 
 export const createLabLighting = (scene, options = {}) => {
-    const { intensity = 0.8, color = new BABYLON.Color3(0.9, 0.95, 1) } = options;
+    const { intensity = 0.8, color = new BABYLON.Color3(0.9, 0.95, 1), preset = 'LAB_DARK' } = options;
 
     // Ambient hemisphere light
     const hemiLight = new BABYLON.HemisphericLight("hemiLight", new BABYLON.Vector3(0, 1, 0), scene);
     hemiLight.intensity = intensity * 0.6;
     hemiLight.diffuse = color;
-    hemiLight.groundColor = new BABYLON.Color3(0.05, 0.08, 0.12);
+
+    if (preset === 'OUTDOOR') {
+        hemiLight.groundColor = new BABYLON.Color3(0.2, 0.4, 0.1);
+        hemiLight.intensity = intensity * 0.8;
+    } else if (preset === 'LAB_WHITE') {
+        hemiLight.intensity = intensity * 0.9;
+    } else {
+        hemiLight.groundColor = new BABYLON.Color3(0.05, 0.08, 0.12);
+    }
 
     // Key light (point)
     const keyLight = new BABYLON.PointLight("keyLight", new BABYLON.Vector3(10, 15, 10), scene);
@@ -125,14 +163,34 @@ export const createGlowMaterial = (scene, color, intensity = 0.5) => {
     return mat;
 };
 
-export const createLabSkybox = (scene) => {
+export const createLabSkybox = (scene, options = {}) => {
+    const { preset = 'LAB_DARK' } = options;
     const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000 }, scene);
     const skyboxMaterial = new BABYLON.StandardMaterial("skyBoxMat", scene);
     skyboxMaterial.backFaceCulling = false;
-    skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
     skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-    skyboxMaterial.emissiveColor = new BABYLON.Color3(0.01, 0.015, 0.02);
-    skybox.material = skyboxMaterial;
     
+    switch (preset) {
+        case 'OUTDOOR':
+            skyboxMaterial.diffuseColor = new BABYLON.Color3(0.4, 0.6, 0.9); // Sky blue
+            skyboxMaterial.emissiveColor = new BABYLON.Color3(0.1, 0.2, 0.4);
+            break;
+        case 'LAB_WHITE':
+            skyboxMaterial.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8);
+            skyboxMaterial.emissiveColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+            break;
+        case 'SPACE':
+            skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+            skyboxMaterial.emissiveColor = new BABYLON.Color3(0.01, 0.01, 0.02);
+            // We could add stars here with a procedural texture if we wanted
+            break;
+        case 'LAB_DARK':
+        default:
+            skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+            skyboxMaterial.emissiveColor = new BABYLON.Color3(0.01, 0.015, 0.02);
+            break;
+    }
+
+    skybox.material = skyboxMaterial;
     return skybox;
 };

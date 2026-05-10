@@ -32,10 +32,11 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }
 
         const engine = new BABYLON.Engine(canvasRef.current, true, { preserveDrawingBuffer: true, stencil: true });
         const scene = new BABYLON.Scene(engine);
-        scene.clearColor = new BABYLON.Color4(0.01, 0.02, 0.04, 1);
+        scene.clearColor = new BABYLON.Color4(0.4, 0.6, 0.9, 1); // Sky color
 
-        createLabEnvironment(scene, { gridSize: 50, showGrid: true, showAxis: false });
-        createLabLighting(scene, { intensity: 0.9 });
+        const envPreset = 'OUTDOOR';
+        createLabEnvironment(scene, { preset: envPreset, gridSize: 100, showGrid: true });
+        createLabLighting(scene, { preset: envPreset, intensity: 1.0 });
         createLabCamera(scene, new BABYLON.Vector3(25, 12, 0), { radius: 60 });
 
         engineRef.current = engine;

@@ -20,10 +20,11 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
         if (!canvasRef.current) return;
         const engine = new BABYLON.Engine(canvasRef.current, true, { preserveDrawingBuffer: true, stencil: true });
         const scene = new BABYLON.Scene(engine);
-        scene.clearColor = new BABYLON.Color4(0.01, 0.02, 0.04, 1);
+        scene.clearColor = new BABYLON.Color4(0.4, 0.6, 0.9, 1); // Sky color
 
-        createLabEnvironment(scene, { gridSize: 30, showGrid: true });
-        createLabLighting(scene, { intensity: 0.9 });
+        const envPreset = 'OUTDOOR';
+        createLabEnvironment(scene, { preset: envPreset, gridSize: 50, showGrid: true });
+        createLabLighting(scene, { preset: envPreset, intensity: 1.0 });
         createLabCamera(scene, new BABYLON.Vector3(0, 15, 25), { radius: 45 });
 
         const rulerMat = new BABYLON.StandardMaterial("rm", scene);

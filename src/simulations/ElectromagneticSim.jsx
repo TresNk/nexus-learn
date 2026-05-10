@@ -23,10 +23,11 @@ const ElectromagneticSim = ({ settings, onUpdate, isRunning, onImpact, triggerRe
 
         const engine = new BABYLON.Engine(canvasRef.current, true);
         const scene = new BABYLON.Scene(engine);
-        scene.clearColor = new BABYLON.Color4(0.01, 0.02, 0.04, 1);
+        scene.clearColor = new BABYLON.Color4(0.01, 0.02, 0.05, 1);
 
-        createLabEnvironment(scene, { gridSize: 30 });
-        createLabLighting(scene);
+        const envPreset = 'LAB_DARK';
+        createLabEnvironment(scene, { preset: envPreset, gridSize: 30 });
+        createLabLighting(scene, { preset: envPreset });
         createLabCamera(scene, new BABYLON.Vector3(0, 2, 0), { radius: 25 });
 
         // Rail
