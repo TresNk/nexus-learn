@@ -13,6 +13,7 @@ const PendulumSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tr
     const thetaRef = useRef(0);
     const velocityArrowRef = useRef(null);
     const [annotations, setAnnotations] = useState([]);
+    const [liveData, setLiveData] = useState({ theta: 0, velocity: 0, time: 0 });
 
     const length = Number(settings.length) || 8;
     const initialAngle = (Number(settings.angle) || 45) * Math.PI / 180;
@@ -71,6 +72,7 @@ const PendulumSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tr
         thetaRef.current = initialAngle;
         time.current = 0;
         setAnnotations([]);
+        setLiveData({ theta: initialAngle, velocity: 0, time: 0 });
 
         const rodLength = length;
         rodRef.current.scaling.y = rodLength / 8;
@@ -111,6 +113,8 @@ const PendulumSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tr
 
             if (velocityArrowRef.current) velocityArrowRef.current.dispose();
             const velocity = length * omega * Math.abs(Math.sin(omega * time.current)) * Math.exp(-damping * time.current);
+            setLiveData({ theta: thetaRef.current, velocity, time: time.current });
+
             const arrowLen = velocity / 3;
             const tangentAngle = thetaRef.current + Math.PI / 2;
             const arrowEnd = bobRef.current.position.add(new BABYLON.Vector3(
@@ -157,7 +161,9 @@ const PendulumSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tr
             "L": `${length}m (length)`,
             "g": "9.81 m/s²",
             "T": `${period.toFixed(2)}s (period)`,
-            "ω": `${omega.toFixed(2)} rad/s`
+            "θ": `${(liveData.theta * 180 / Math.PI).toFixed(1)}°`,
+            "v": `${liveData.velocity.toFixed(2)} m/s`,
+            "t": `${liveData.time.toFixed(2)}s`
         },
         annotations: annotations
     };

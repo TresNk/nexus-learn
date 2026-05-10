@@ -10,6 +10,7 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
     const ballRef = useRef(null);
     const time = useRef(0);
     const [annotations, setAnnotations] = useState([]);
+    const [liveData, setLiveData] = useState({ height: 0, velocity: 0, time: 0 });
 
     const height = Number(settings.height) || 30;
     const g = 9.81;
@@ -71,6 +72,7 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
         ballRef.current.position = new BABYLON.Vector3(0, startHeight, 0);
         time.current = 0;
         setAnnotations([]);
+        setLiveData({ height: startHeight, velocity: 0, time: 0 });
 
         onUpdate({
             height: startHeight.toFixed(1) + " m",
@@ -105,6 +107,8 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
             ballRef.current.position.y = Math.max(0.75, position);
 
             const currentVel = Math.abs(velocity);
+            setLiveData({ height: position, velocity: currentVel, time: time.current });
+
             onUpdate({
                 height: position.toFixed(1) + " m",
                 velocity: currentVel.toFixed(1) + " m/s",
@@ -139,7 +143,9 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
         variables: {
             "h₀": `${height}m (initial height)`,
             "g": "9.81 m/s²",
-            "t": `${time.current.toFixed(2)}s`,
+            "h": `${liveData.height.toFixed(1)}m`,
+            "v": `${liveData.velocity.toFixed(1)} m/s`,
+            "t": `${liveData.time.toFixed(2)}s`,
             "fall time": `${fallTime.toFixed(2)}s`
         },
         annotations: annotations

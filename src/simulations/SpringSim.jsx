@@ -11,6 +11,7 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
     const springRef = useRef(null);
     const time = useRef(0);
     const [annotations, setAnnotations] = useState([]);
+    const [liveData, setLiveData] = useState({ displacement: 0, force: 0, velocity: 0, time: 0 });
 
     const k = Number(settings.k) || 20;
     const mass = Number(settings.mass) || 2;
@@ -37,7 +38,10 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
 
         const anchor = BABYLON.MeshBuilder.CreateCylinder("anchor", { diameter: 0.4, height: 1 }, scene);
         anchor.position.y = 13.5;
-        anchor.material = anchorMat(scene);
+
+        const aMat = new BABYLON.StandardMaterial("am", scene);
+        aMat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.6);
+        anchor.material = aMat;
 
         const mass = BABYLON.MeshBuilder.CreateBox("mass", { width: 2.5, height: 2.5, depth: 2.5 }, scene);
         const massMat = new BABYLON.StandardMaterial("mm", scene);
@@ -68,12 +72,6 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
         };
     }, []);
 
-    const anchorMat = (scene) => {
-        const mat = new BABYLON.StandardMaterial("am", scene);
-        mat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.6);
-        return mat;
-    };
-
     const createSpring = (scene, topY, bottomY, coils = 15) => {
         const points = [];
         for (let i = 0; i <= coils * 4; i++) {
@@ -96,6 +94,7 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
 
         time.current = 0;
         setAnnotations([]);
+        setLiveData({ displacement, force: k * displacement, velocity: 0, time: 0 });
 
         const springForce = k * displacement;
         onUpdate({
@@ -133,6 +132,7 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
 
             const springForce = Math.abs(k * position);
             const totalEnergy = 0.5 * k * position * position + 0.5 * mass * velocity * velocity;
+            setLiveData({ displacement: Math.abs(position), force: springForce, velocity, time: time.current });
 
             onUpdate({
                 k: k + " N/m",
@@ -162,9 +162,10 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
         formula: "F = -kx",
         variables: {
             "k": `${k} N/m`,
-            "x": `${displacement}m (displacement)`,
-            "ω": `${omega.toFixed(2)} rad/s`,
-            "T": `${period.toFixed(2)}s`
+            "x": `${liveData.displacement.toFixed(2)}m`,
+            "F": `${liveData.force.toFixed(1)} N`,
+            "v": `${Math.abs(liveData.velocity).toFixed(2)} m/s`,
+            "t": `${liveData.time.toFixed(2)}s`
         },
         annotations: annotations
     };

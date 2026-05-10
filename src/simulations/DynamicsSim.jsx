@@ -11,6 +11,7 @@ const DynamicsSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
     const forceArrowRef = useRef(null);
     const time = useRef(0);
     const [annotations, setAnnotations] = useState([]);
+    const [liveData, setLiveData] = useState({ acceleration: 0, velocity: 0, distance: 0, time: 0 });
 
     const force = Number(settings.force) || 50;
     const mass = Number(settings.mass) || 10;
@@ -70,6 +71,7 @@ const DynamicsSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
         boxRef.current.position.x = 0;
         time.current = 0;
         setAnnotations([]);
+        setLiveData({ acceleration, velocity: 0, distance: 0, time: 0 });
 
         onUpdate({
             acceleration: acceleration.toFixed(2) + " m/s²",
@@ -97,6 +99,7 @@ const DynamicsSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
             const velocity = a * time.current;
 
             boxRef.current.position.x = distance;
+            setLiveData({ acceleration: a, velocity, distance, time: time.current });
 
             if (forceArrowRef.current) forceArrowRef.current.dispose();
             const arrowLen = f / 10;
@@ -137,8 +140,10 @@ const DynamicsSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
         variables: {
             "F": `${force} N (force)`,
             "m": `${mass} kg (mass)`,
-            "a": `${acceleration.toFixed(2)} m/s²`,
-            "v": "velocity"
+            "a": `${liveData.acceleration.toFixed(2)} m/s²`,
+            "v": `${liveData.velocity.toFixed(1)} m/s`,
+            "d": `${liveData.distance.toFixed(1)} m`,
+            "t": `${liveData.time.toFixed(1)} s`
         },
         annotations: annotations
     };

@@ -16,6 +16,7 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }
     const time = useRef(0);
     const [annotations, setAnnotations] = useState([]);
     const [showEdu, setShowEdu] = useState(true);
+    const [liveTime, setLiveTime] = useState(0);
 
     const h0 = Number(settings.height);
     const angleRad = (Number(settings.angle) * Math.PI) / 180;
@@ -58,6 +59,8 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }
         const scene = sceneRef.current;
         if (!scene) return;
 
+        setLiveTime(0);
+
         if (towerRef.current) towerRef.current.dispose();
         if (barrelRef.current) barrelRef.current.dispose();
         if (ballRef.current) ballRef.current.dispose();
@@ -97,6 +100,18 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }
         setAnnotations([]);
     }, [settings.height, settings.angle, triggerReset]);
 
+    const getAnnotation = (t, x, y, vx, vy, h0) => {
+        const annotations = [
+            { threshold: 0.5, text: `Initial velocity: ${vx.toFixed(1)} m/s horizontal, ${vy_init.toFixed(1)} m/s vertical` },
+            { threshold: 1.5, text: `Gravity reducing vertical speed: vy = ${vy.toFixed(1)} m/s` },
+            { threshold: 2.5, text: `Ball at peak height: ${y.toFixed(1)}m. Vertical velocity = 0` },
+            { threshold: 3.5, text: `Falling now: vertical speed increasing in negative direction` },
+            { threshold: 4.5, text: `Approaching ground: total speed = ${Math.sqrt(vx*vx + vy*vy).toFixed(1)} m/s` },
+        ];
+        const match = annotations.find(a => t >= a.threshold) || { text: `Position: (${x.toFixed(1)}, ${y.toFixed(1)})m` };
+        return { t: `t=${t.toFixed(1)}s`, text: match.text };
+    };
+
     useEffect(() => {
         const scene = sceneRef.current;
         if (!scene || !isRunning) return;
@@ -113,6 +128,7 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }
 
                 ballRef.current.position.x = posX;
                 ballRef.current.position.y = Math.max(0, posY);
+                setLiveTime(time.current);
 
                 pointsRef.current.push(ballRef.current.position.clone());
                 if (pointsRef.current.length > 2) {
@@ -158,18 +174,6 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }
         return () => scene.onBeforeRenderObservable.removeCallback(physicsStep);
     }, [isRunning]);
 
-    const getAnnotation = (t, x, y, vx, vy, h0) => {
-        const annotations = [
-            { threshold: 0.5, text: `Initial velocity: ${vx.toFixed(1)} m/s horizontal, ${vy_init.toFixed(1)} m/s vertical` },
-            { threshold: 1.5, text: `Gravity reducing vertical speed: vy = ${vy.toFixed(1)} m/s` },
-            { threshold: 2.5, text: `Ball at peak height: ${y.toFixed(1)}m. Vertical velocity = 0` },
-            { threshold: 3.5, text: `Falling now: vertical speed increasing in negative direction` },
-            { threshold: 4.5, text: `Approaching ground: total speed = ${Math.sqrt(vx*vx + vy*vy).toFixed(1)} m/s` },
-        ];
-        const match = annotations.find(a => t >= a.threshold) || { text: `Position: (${x.toFixed(1)}, ${y.toFixed(1)})m` };
-        return { t: `t=${t.toFixed(1)}s`, text: match.text };
-    };
-
     const eduData = {
         formula: "y = h₀ + v₀sin(θ)t - ½gt²",
         variables: {
@@ -177,7 +181,7 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }
             "v₀": `${v0} m/s (initial speed)`,
             "θ": `${settings.angle}° (launch angle)`,
             "g": "9.81 m/s² (gravity)",
-            "t": `${time.current.toFixed(2)}s`
+            "t": `${liveTime.toFixed(2)}s`
         },
         annotations: annotations
     };
