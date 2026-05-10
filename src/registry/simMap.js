@@ -11,6 +11,7 @@ const DopplerSim = React.lazy(() => import('../simulations/DopplerSim'));
 const CircuitSim = React.lazy(() => import('../simulations/CircuitSim'));
 const RefractionSim = React.lazy(() => import('../simulations/RefractionSim'));
 const MagneticFieldSim = React.lazy(() => import('../simulations/MagneticFieldSim'));
+const ElectromagneticSim = React.lazy(() => import('../simulations/ElectromagneticSim'));
 const ChemistrySim = React.lazy(() => import('../simulations/ChemistrySim'));
 
 export const SUBJECTS = [
@@ -120,6 +121,16 @@ export const SUBJECTS = [
                 difficulty: 2,
                 sims: ['magnet drag', 'field lines', 'compass needle'],
                 initialConfig: { separation: 10, orientation: 'N-N', fieldLines: 8, compassX: 5 }
+            },
+            {
+                id: 'ELECTROMAGNETIC_INDUCTION',
+                title: 'Electromagnetic Induction',
+                icon: Zap,
+                component: ElectromagneticSim,
+                description: 'Move a coil through a magnetic field; induce a current.',
+                difficulty: 3,
+                sims: ['galvanometer', 'flux change', 'coil speed'],
+                initialConfig: { velocity: 5, turns: 10, fieldStrength: 5 }
             }
         ]
     },

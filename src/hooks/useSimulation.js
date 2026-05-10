@@ -76,6 +76,13 @@ export const calculatePrediction = (expId, config) => {
             const strength = (1 / (Math.abs(cx + sep / 2) + 1)).toFixed(3);
             return { type: 'field', value: strength, unit: 'T', label: 'Field Strength' };
         }
+        case 'ELECTROMAGNETIC_INDUCTION': {
+            const v = config.velocity || 5;
+            const n = config.turns || 10;
+            const b = config.fieldStrength || 5;
+            const peakEmf = (v * n * b * 0.1).toFixed(1);
+            return { type: 'emf', value: peakEmf, unit: 'mV', label: 'Peak EMF' };
+        }
         default:
             return null;
     }
@@ -93,6 +100,7 @@ export const getFormula = (expId) => {
         'SIMPLE_CIRCUITS': { formula: 'V = IR', variables: ['V (voltage)', 'I (current)', 'R (resistance)'] },
         'REFRACTION_SNELL': { formula: 'n₁sin(θ₁) = n₂sin(θ₂)', variables: ['n (refractive index)', 'θ (angle)'] },
         'MAGNETIC_FIELD': { formula: 'B = μ₀I / 2πr', variables: ['r (distance)', 'I (current)'] },
+        'ELECTROMAGNETIC_INDUCTION': { formula: 'ε = -N (ΔΦ / Δt)', variables: ['N (turns)', 'Φ (magnetic flux)', 't (time)'] },
     };
     return formulas[expId] || null;
 };

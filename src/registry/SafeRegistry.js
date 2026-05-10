@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import GenericSimulation from '../components/GenericSimulation';
 
 export const validateSimulation = (sim) => {
     const requiredFields = ['id', 'title', 'component', 'initialConfig'];
@@ -78,7 +79,7 @@ export const generateExperimentConfig = (topic, aiResponse) => {
             id: `${topic.toUpperCase().replace(/\s+/g, '_')}_GEN`,
             title: topic,
             icon: 'Zap',
-            component: null, 
+            component: GenericSimulation,
             description: aiResponse.description || `Explore ${topic} concepts`,
             difficulty: aiResponse.difficulty || 1,
             sims: aiResponse.features || [],
@@ -97,7 +98,6 @@ export const generateExperimentConfig = (topic, aiResponse) => {
 export const useSafeRegistry = (initialSubjects) => {
     const [subjects, setSubjects] = useState(initialSubjects);
     const [failedSims, setFailedSims] = useState([]);
-    const [loadedGenerated, setLoadedGenerated] = useState([]);
 
     const addExperiment = (subjectId, experiment) => {
         const result = safeAddExperiment(subjects, subjectId, experiment);
@@ -141,7 +141,6 @@ export const useSafeRegistry = (initialSubjects) => {
         markFailed,
         clearFailed,
         failedSims,
-        loadedGenerated,
         addGeneratedSim
     };
 };
