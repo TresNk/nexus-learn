@@ -142,14 +142,14 @@ export const SUBJECTS = [
         description: 'Explore atomic structures and chemical reactions.',
         experiments: [
             {
-                id: 'ATOMIC_BONDS',
-                title: 'Ionic Bonding',
+                id: 'CHEM_TITRATION',
+                title: 'Acid-Base Titration',
                 icon: FlaskConical,
                 component: ChemistrySim,
-                description: 'Understand how atoms share or trade electrons.',
-                difficulty: 1,
-                sims: ['bond builder', 'electronegativity', '3D model'],
-                initialConfig: { atoms: 2 }
+                description: 'Study neutralization through titration and indicator color changes.',
+                difficulty: 2,
+                sims: ['pH curve', 'indicator', 'molarity'],
+                initialConfig: { acidVolume: 25, acidConcentration: 0.1, baseConcentration: 0.1 }
             }
         ]
     }

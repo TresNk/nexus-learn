@@ -9,6 +9,11 @@ const RefractionSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = 
     const sceneRef = useRef(null);
     const rayRef = useRef(null);
     const refractedRayRef = useRef(null);
+    const [liveData, setLiveData] = useState({
+        theta1: 0,
+        theta2: 0,
+        isTIR: false
+    });
     const [annotations, setAnnotations] = useState([]);
 
     const angle = Number(settings.angle) || 45;
@@ -17,24 +22,16 @@ const RefractionSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = 
     const angleRad = (angle * Math.PI) / 180;
     const sinTheta2 = (n1 / n2) * Math.sin(angleRad);
     const isTIR = Math.abs(sinTheta2) > 1;
-    const criticalAngle = Math.asin(n2 / n1) * 180 / Math.PI;
+    const criticalAngle = n1 > n2 ? Math.asin(n2 / n1) * 180 / Math.PI : null;
 
     useEffect(() => {
         if (!canvasRef.current) return;
         const engine = new BABYLON.Engine(canvasRef.current, true, { preserveDrawingBuffer: true, stencil: true });
         const scene = new BABYLON.Scene(engine);
-        scene.clearColor = new BABYLON.Color4(0.01, 0.02, 0.05, 1);
 
-        createLabEnvironment(scene, { gridSize: 15, showGrid: true });
+        createLabEnvironment(scene, { preset: 'LAB_DARK', gridSize: 15, showGrid: true });
         createLabLighting(scene, { intensity: 0.9 });
         createLabCamera(scene, new BABYLON.Vector3(0, 2, 20), { radius: 30 });
-
-        const airMat = new BABYLON.StandardMaterial("air", scene);
-        airMat.diffuseColor = new BABYLON.Color3(0.05, 0.08, 0.12);
-        airMat.alpha = 0.3;
-        const air = BABYLON.MeshBuilder.CreateBox("air", { width: 20, height: 8, depth: 10 }, scene);
-        air.position.y = 6;
-        air.material = airMat;
 
         const glassMat = new BABYLON.StandardMaterial("glass", scene);
         glassMat.diffuseColor = new BABYLON.Color3(0.2, 0.4, 0.5);
@@ -43,25 +40,6 @@ const RefractionSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = 
         glass.position.y = -2;
         glass.material = glassMat;
 
-        const boundaryMat = new BABYLON.StandardMaterial("bm", scene);
-        boundaryMat.diffuseColor = new BABYLON.Color3(0.3, 0.3, 0.4);
-        boundaryMat.alpha = 0.5;
-        const boundary = BABYLON.MeshBuilder.CreatePlane("boundary", { width: 20, height: 10 }, scene);
-        boundary.position.y = 2;
-        boundary.rotation.x = Math.PI / 2;
-        boundary.material = boundaryMat;
-
-        const sourceMat = new BABYLON.StandardMaterial("sm", scene);
-        sourceMat.diffuseColor = new BABYLON.Color3(1, 1, 0.8);
-        sourceMat.emissiveColor = new BABYLON.Color3(1, 1, 0.5);
-        const source = BABYLON.MeshBuilder.CreateCylinder("source", { diameter: 1, height: 0.5 }, scene);
-        source.position = new BABYLON.Vector3(-8, 8, 0);
-        source.rotation.z = Math.PI / 2;
-        source.material = sourceMat;
-
-        const normalMat = new BABYLON.StandardMaterial("nm", scene);
-        normalMat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-        normalMat.alpha = 0.5;
         const normalLine = BABYLON.MeshBuilder.CreateLines("normal", { points: [new BABYLON.Vector3(0, 10, 0), new BABYLON.Vector3(0, -5, 0)] }, scene);
         normalLine.color = new BABYLON.Color3(0.5, 0.5, 0.5);
 
@@ -69,62 +47,70 @@ const RefractionSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = 
         sceneRef.current = scene;
 
         engine.runRenderLoop(() => scene.render());
-        const resize = () => engine.resize();
-        window.addEventListener("resize", resize);
-        setTimeout(resize, 100);
-
-        return () => {
-            window.removeEventListener("resize", resize);
-            engine.dispose();
-        };
+        return () => engine.dispose();
     }, []);
 
     useEffect(() => {
-        if (!sceneRef.current) return;
+        const scene = sceneRef.current;
+        if (!scene) return;
 
-        const startPoint = new BABYLON.Vector3(-8, 8, 0);
+        let progress = 0;
+        const startPoint = new BABYLON.Vector3(-Math.sin(angleRad) * 10, Math.cos(angleRad) * 10 + 2, 0);
         const hitPoint = new BABYLON.Vector3(0, 2, 0);
 
         if (rayRef.current) rayRef.current.dispose();
-        rayRef.current = BABYLON.MeshBuilder.CreateLines("incidentRay", { points: [startPoint, hitPoint] }, sceneRef.current);
-        rayRef.current.color = new BABYLON.Color3(1, 1, 0.5);
-
         if (refractedRayRef.current) refractedRayRef.current.dispose();
 
-        if (!isTIR) {
-            const theta2 = Math.asin(sinTheta2);
-            const refractedDir = new BABYLON.Vector3(Math.cos(theta2), -Math.sin(theta2), 0);
-            const refractedEnd = hitPoint.add(refractedDir.scale(18));
-            refractedRayRef.current = BABYLON.MeshBuilder.CreateLines("refractedRay", { points: [hitPoint, refractedEnd] }, sceneRef.current);
-            refractedRayRef.current.color = new BABYLON.Color3(0, 1, 0.5);
-        }
+        const animateRay = () => {
+            if (!isRunning) {
+                progress = 0;
+                return;
+            }
 
-        setAnnotations([]);
+            progress += 0.02;
+            if (progress > 1.5) progress = 0;
+
+            const currentRayPoints = [startPoint, BABYLON.Vector3.Lerp(startPoint, hitPoint, Math.min(progress, 1))];
+            if (rayRef.current) rayRef.current.dispose();
+            rayRef.current = BABYLON.MeshBuilder.CreateLines("incident", { points: currentRayPoints }, scene);
+            rayRef.current.color = new BABYLON.Color3(1, 1, 0.5);
+
+            if (progress > 1) {
+                const refractedProgress = progress - 1;
+                let endPoint;
+                if (isTIR) {
+                    const reflectedDir = new BABYLON.Vector3(Math.sin(angleRad), Math.cos(angleRad), 0);
+                    endPoint = hitPoint.add(reflectedDir.scale(10));
+                } else {
+                    const theta2 = Math.asin(sinTheta2);
+                    const refractedDir = new BABYLON.Vector3(Math.sin(theta2), -Math.cos(theta2), 0);
+                    endPoint = hitPoint.add(refractedDir.scale(10));
+                }
+
+                const currentRefractedPoints = [hitPoint, BABYLON.Vector3.Lerp(hitPoint, endPoint, Math.min(refractedProgress * 2, 1))];
+                if (refractedRayRef.current) refractedRayRef.current.dispose();
+                refractedRayRef.current = BABYLON.MeshBuilder.CreateLines("refracted", { points: currentRefractedPoints }, scene);
+                refractedRayRef.current.color = isTIR ? new BABYLON.Color3(1, 0.2, 0.2) : new BABYLON.Color3(0.5, 1, 0.5);
+            }
+        };
+
+        scene.onBeforeRenderObservable.add(animateRay);
         
-        if (isTIR) {
-            setAnnotations([{ t: "TIR", text: `Total Internal Reflection! Angle ${angle}° > critical angle ${criticalAngle.toFixed(1)}°. Light cannot escape.` }]);
-        } else {
-            const bendDir = n2 > n1 ? "toward the normal (slower)" : "away from the normal (faster)";
-            setAnnotations([{ t: "Refraction", text: `Light bends ${bendDir}. Using Snell's Law: n₁sin(θ₁) = n₂sin(θ₂)` }]);
-        }
+        const t2 = isTIR ? 'TIR' : (Math.asin(sinTheta2) * 180 / Math.PI).toFixed(1) + "°";
+        setLiveData({ theta1: angle, theta2: t2, isTIR });
+        onUpdate({ "θ1": angle + "°", "θ2": t2, status: isTIR ? 'Reflected' : 'Refracted' });
 
-        onUpdate({
-            "angle (°)": angle + "°",
-            "n1 (air)": n1.toFixed(2),
-            "n2 (glass)": n2.toFixed(2),
-            "refracted": isTIR ? "Total Reflection" : (n2 > n1 ? "Bent toward" : "Bent away"),
-            "critical angle": criticalAngle.toFixed(1) + "°"
-        });
-    }, [settings.angle, settings.n1, settings.n2, triggerReset, angle, n1, n2, isTIR, sinTheta2, criticalAngle]);
+        return () => scene.onBeforeRenderObservable.removeCallback(animateRay);
+    }, [isRunning, triggerReset, angle, n1, n2, isTIR, angleRad, sinTheta2]);
 
     const eduData = {
         formula: "n₁sin(θ₁) = n₂sin(θ₂)",
         variables: {
             "n1": n1.toFixed(2),
             "n2": n2.toFixed(2),
-            "θ1": `${angle}°`,
-            "θ2": isTIR ? "N/A (TIR)" : (Math.asin(sinTheta2) * 180 / Math.PI).toFixed(1) + "°",
-            "critical": `${criticalAngle.toFixed(1)}°`
+            "θ1": `${liveData.theta1}°`,
+            "θ2": liveData.theta2,
+            "Critical": criticalAngle ? `${criticalAngle.toFixed(1)}°` : "N/A"
         },
         annotations: annotations
     };
