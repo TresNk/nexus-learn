@@ -9,12 +9,7 @@ const RefractionSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = 
     const sceneRef = useRef(null);
     const rayRef = useRef(null);
     const refractedRayRef = useRef(null);
-    const [liveData, setLiveData] = useState({
-        theta1: 0,
-        theta2: 0,
-        isTIR: false
-    });
-    const [annotations, setAnnotations] = useState([]);
+    const [annotations] = useState([]);
 
     const angle = Number(settings.angle) || 45;
     const n1 = Number(settings.n1) || 1.0;
@@ -95,21 +90,24 @@ const RefractionSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = 
         };
 
         scene.onBeforeRenderObservable.add(animateRay);
-        
-        const t2 = isTIR ? 'TIR' : (Math.asin(sinTheta2) * 180 / Math.PI).toFixed(1) + "°";
-        setLiveData({ theta1: angle, theta2: t2, isTIR });
-        onUpdate({ "θ1": angle + "°", "θ2": t2, status: isTIR ? 'Reflected' : 'Refracted' });
 
         return () => scene.onBeforeRenderObservable.removeCallback(animateRay);
-    }, [isRunning, triggerReset, angle, n1, n2, isTIR, angleRad, sinTheta2]);
+    }, [isRunning, triggerReset, angleRad, isTIR, sinTheta2]);
+
+    useEffect(() => {
+        const t2 = isTIR ? 'TIR' : (Math.asin(sinTheta2) * 180 / Math.PI).toFixed(1) + "°";
+        onUpdate({ "θ1": angle + "°", "θ2": t2, status: isTIR ? 'Reflected' : 'Refracted' });
+    }, [angle, isTIR, sinTheta2, onUpdate]);
+
+    const t2_display = isTIR ? 'TIR' : (Math.asin(sinTheta2) * 180 / Math.PI).toFixed(1) + "°";
 
     const eduData = {
         formula: "n₁sin(θ₁) = n₂sin(θ₂)",
         variables: {
             "n1": n1.toFixed(2),
             "n2": n2.toFixed(2),
-            "θ1": `${liveData.theta1}°`,
-            "θ2": liveData.theta2,
+            "θ1": `${angle}°`,
+            "θ2": t2_display,
             "Critical": criticalAngle ? `${criticalAngle.toFixed(1)}°` : "N/A"
         },
         annotations: annotations

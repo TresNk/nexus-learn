@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { SUBJECTS } from './registry/simMap';
 import LabStage from './components/LabStage';
 import { getNexusResponse, generateSimulationConfig } from './services/aiService';
@@ -80,7 +80,7 @@ function App() {
         const response = await getNexusResponse(userText, { ...config, ...liveData, isRunning }, chatLog);
         setChatLog(prev => [...prev, { role: 'nexus', text: response }]);
       }
-    } catch (err) {
+    } catch {
       setChatLog(prev => [...prev, { role: 'nexus', text: "Connection to Brain lost. Try again." }]);
     } finally {
       setIsTyping(false);
@@ -92,7 +92,7 @@ function App() {
       'pendulum', 'gravity', 'projectile', 'newton', 'spring', 'wave', 
       'doppler', 'circuit', 'refraction', 'magnetic', 'optics', 'thermodynamics',
       'quantum', 'relativity', 'fluid', 'collision', 'momentum', 'energy',
-      'oscillator', '共振', 'sound', 'light', 'electric', 'magnetism'
+      'oscillator', 'sound', 'light', 'electric', 'magnetism'
     ];
     
     const lowerText = text.toLowerCase();

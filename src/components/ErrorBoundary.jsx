@@ -1,37 +1,30 @@
-import React, { Component } from 'react';
+import React from 'react';
 
-class ErrorBoundary extends Component {
+class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { hasError: false, error: null, errorInfo: null };
+        this.state = { hasError: false };
     }
 
-    static getDerivedStateFromError(error) {
+    static getDerivedStateFromError() {
         return { hasError: true };
     }
 
     componentDidCatch(error, errorInfo) {
-        this.setState({
-            error: error,
-            errorInfo: errorInfo
-        });
-        console.error('Simulation Error:', error, errorInfo);
+        console.error(`[ErrorBoundary] ${this.props.simulationName || 'App'}:`, error, errorInfo);
     }
 
     render() {
         if (this.state.hasError) {
             return this.props.fallback || (
-                <div style={styles.fallbackContainer}>
-                    <div style={styles.fallbackIcon}>⚠️</div>
-                    <div style={styles.fallbackTitle}>Simulation Unavailable</div>
-                    <div style={styles.fallbackMessage}>
-                        {this.props.simulationName || 'This experiment'} is temporarily unavailable.
-                    </div>
+                <div style={styles.error}>
+                    <h3>Simulation Unavailable</h3>
+                    <p>There was a glitch in the simulation engine.</p>
                     <button 
                         onClick={() => this.setState({ hasError: false })}
-                        style={styles.retryButton}
+                        style={styles.btn}
                     >
-                        Try Again
+                        Reload Module
                     </button>
                 </div>
             );
@@ -42,41 +35,28 @@ class ErrorBoundary extends Component {
 }
 
 const styles = {
-    fallbackContainer: {
-        width: '100%',
+    error: {
         height: '100%',
+        width: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#010204',
-        color: '#94a3b8',
-        fontFamily: 'monospace',
-    },
-    fallbackIcon: {
-        fontSize: '48px',
-        marginBottom: '20px',
-    },
-    fallbackTitle: {
-        fontSize: '18px',
-        fontWeight: 'bold',
+        backgroundColor: '#05070a',
         color: '#ef4444',
-        marginBottom: '10px',
+        fontFamily: 'monospace',
+        padding: '20px',
+        textAlign: 'center'
     },
-    fallbackMessage: {
-        fontSize: '14px',
-        color: '#64748b',
-        marginBottom: '20px',
-        textAlign: 'center',
-    },
-    retryButton: {
-        background: 'rgba(59, 130, 246, 0.2)',
-        border: '1px solid rgba(59, 130, 246, 0.5)',
-        color: '#3b82f6',
+    btn: {
+        marginTop: '20px',
         padding: '10px 20px',
+        backgroundColor: '#ef4444',
+        color: 'white',
+        border: 'none',
         borderRadius: '8px',
         cursor: 'pointer',
-        fontSize: '12px',
+        fontWeight: 'bold'
     }
 };
 

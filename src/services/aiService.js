@@ -1,106 +1,55 @@
-// src/services/aiService.js
-// Using Google Gemini API
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const GOOGLE_API_KEY = "YOUR_GOOGLE_API_KEY"; // Get from https://aistudio.google.com/app/apikey
+const API_KEY = import.meta.env.VITE_GEMINI_KEY || "dummy-key";
+const genAI = new GoogleGenerativeAI(API_KEY);
 
-export const getNexusResponse = async (userMessage, physicsData, chatHistory) => {
-    const systemPrompt = `
-You are Nexus, an expert Physics Tutor for the Nexus Learn platform.
-You are currently monitoring a 3D physics simulation lab.
-
-CURRENT LAB DATA:
-${Object.entries(physicsData).map(([k, v]) => `- ${k}: ${v}`).join('\n')}
-
-INSTRUCTIONS:
-1. Be concise but scientific.
-2. If the student is confused, explain the formulas with their actual numbers.
-3. If they ask to create/generate a new simulation, respond with a JSON object:
-   {"title": "Simulation Name", "description": "What it shows", "difficulty": 1-3, "initialConfig": {"param1": value}, "features": ["feature1", "feature2"]}
-4. Keep responses friendly and educational.
-`;
-
+export const getNexusResponse = async (userInput, currentState, chatHistory) => {
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_API_KEY}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                contents: [
-                    {
-                        role: "user",
-                        parts: [{ text: `System: ${systemPrompt}\n\nChat history:\n${chatHistory.map(m => `${m.role}: ${m.text}`).join('\n')}\n\nUser: ${userMessage}` }]
-                    }
-                ],
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 1000,
-                }
-            })
-        });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        const data = await response.json();
-        
-        if (data.error) {
-            console.error("Google API Error:", data.error);
-            return "Nexus Brain is taking a moment. Please try again.";
-        }
+        const historyContext = chatHistory.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
 
-        return data.candidates[0].content.parts[0].text;
-    } catch (error) {
-        console.error("AI Error:", error);
-        return "Connection to Nexus Brain lost. Please check your API configuration.";
+        const prompt = `
+        You are NEXUS BRAIN, an expert physics and science tutor.
+        Current Experiment Context: ${JSON.stringify(currentState)}
+        Recent Chat: ${historyContext}
+
+        User: ${userInput}
+
+        Provide a concise, helpful explanation focused on the physics/science principles.
+        If the user is asking about the current simulation, reference the live data provided.
+        Keep it high-school level and encouraging.
+        `;
+
+        const result = await model.generateContent(prompt);
+        return result.response.text();
+    } catch {
+        return "I'm having trouble connecting to my knowledge base, but let's keep exploring the simulation.";
     }
 };
 
-export const generateSimulationConfig = async (topic, context) => {
+export const generateSimulationConfig = async (topic) => {
     const prompt = `
-Generate a physics simulation configuration for "${topic}".
+ Generate a physics simulation configuration for "${topic}".
 
-Return ONLY a valid JSON object with this exact structure:
-{
-  "title": "Clear simulation name",
-  "description": "What students will learn (1-2 sentences)",
-  "difficulty": 1,
-  "initialConfig": {"param1": value, "param2": value},
-  "features": ["feature1", "feature2", "feature3"]
-}
+ Return ONLY a JSON object with:
+ {
+   "title": "Short Title",
+   "initialConfig": { "param1": value, "param2": value },
+   "description": "Brief explanation",
+   "difficulty": 1, 2, or 3
+ }
 
-Make it educational and appropriate for students.
-`;
+ Stick to standard physics parameters (gravity, mass, velocity, angle, length, etc).
+ `;
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_API_KEY}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.3,
-                    maxOutputTokens: 500,
-                }
-            })
-        });
-
-        const data = await response.json();
-        
-        if (data.error) {
-            return null;
-        }
-
-        const text = data.candidates[0].content.parts[0].text;
-        
-        // Try to parse JSON from the response
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
         const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
-        
-        return null;
-    } catch (error) {
-        console.error("Generation Error:", error);
+        return jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+    } catch {
         return null;
     }
 };

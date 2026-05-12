@@ -3,7 +3,7 @@ import * as BABYLON from '@babylonjs/core';
 import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
 import EduOverlay from '../components/EduOverlay';
 
-const ElectromagneticSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }) => {
+const ElectromagneticSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, eduMode = true }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const sceneRef = useRef(null);
@@ -11,7 +11,6 @@ const ElectromagneticSim = ({ settings, onUpdate, isRunning, onImpact, triggerRe
     const magnetRef = useRef(null);
     const time = useRef(0);
     const [annotations, setAnnotations] = useState([]);
-    const [showEdu, setShowEdu] = useState(true);
     const [emfValue, setEmfValue] = useState(0);
 
     const velocity = Number(settings.velocity || 5);
@@ -185,18 +184,7 @@ const ElectromagneticSim = ({ settings, onUpdate, isRunning, onImpact, triggerRe
                     }} />
                 </div>
             </div>
-            <button
-                onClick={() => setShowEdu(!showEdu)}
-                style={{
-                    position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)',
-                    background: 'rgba(59, 130, 246, 0.2)', border: '1px solid rgba(59, 130, 246, 0.5)',
-                    color: '#3b82f6', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer',
-                    fontSize: '12px', zIndex: 200
-                }}
-            >
-                {showEdu ? '📊 Hide Education' : '📊 Show Education'}
-            </button>
-            {showEdu && <EduOverlay {...eduData} />}
+            {eduMode && <EduOverlay {...eduData} />}
         </div>
     );
 };

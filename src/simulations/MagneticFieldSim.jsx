@@ -3,18 +3,14 @@ import * as BABYLON from '@babylonjs/core';
 import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
 import EduOverlay from '../components/EduOverlay';
 
-const MagneticFieldSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true }) => {
+const MagneticFieldSim = ({ settings, onUpdate, isRunning, eduMode = true }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const sceneRef = useRef(null);
     const fieldLinesRef = useRef([]);
     const compassRef = useRef(null);
     const needleRef = useRef(null);
-    const [liveData, setLiveData] = useState({
-        bField: 0,
-        alignment: 0
-    });
-    const [annotations, setAnnotations] = useState([]);
+    const [livePhysicsData, setLivePhysicsData] = useState(null);
 
     const separation = Number(settings.separation) || 10;
     const numLines = Number(settings.fieldLines) || 12;
@@ -29,14 +25,12 @@ const MagneticFieldSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode
         createLabLighting(scene, { preset: 'LAB_WHITE', intensity: 1.0 });
         createLabCamera(scene, BABYLON.Vector3.Zero(), { radius: 30 });
 
-        // Magnet
         const northMat = new BABYLON.StandardMaterial("nm", scene);
         northMat.diffuseColor = new BABYLON.Color3(1, 0.2, 0.2);
         const magnet = BABYLON.MeshBuilder.CreateBox("magnet", { width: 4, height: 1.5, depth: 1.5 }, scene);
         magnet.position = new BABYLON.Vector3(-separation / 2, 0.75, 0);
         magnet.material = northMat;
 
-        // Compass
         const compass = BABYLON.MeshBuilder.CreateCylinder("compass", { diameter: 2.5, height: 0.4 }, scene);
         compass.position = new BABYLON.Vector3(compassX, 0.2, 0);
         compassRef.current = compass;
@@ -48,21 +42,9 @@ const MagneticFieldSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode
         needle.material = nMat;
         needleRef.current = needle;
 
-        engineRef.current = engine;
-        sceneRef.current = scene;
-
-        engine.runRenderLoop(() => scene.render());
-        return () => engine.dispose();
-    }, []);
-
-    useEffect(() => {
-        const scene = sceneRef.current;
-        if (!scene || !needleRef.current) return;
-
         fieldLinesRef.current.forEach(l => l.dispose());
         fieldLinesRef.current = [];
 
-        // Draw static field lines
         for (let i = 0; i < numLines; i++) {
             const angle = (i / numLines) * Math.PI * 2;
             const points = [];
@@ -77,6 +59,17 @@ const MagneticFieldSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode
             fieldLinesRef.current.push(line);
         }
 
+        engineRef.current = engine;
+        sceneRef.current = scene;
+        engine.runRenderLoop(() => scene.render());
+
+        return () => engine.dispose();
+    }, [separation, numLines, compassX]);
+
+    useEffect(() => {
+        const scene = sceneRef.current;
+        if (!scene || !needleRef.current) return;
+
         const animateCompass = () => {
             if (!isRunning) return;
 
@@ -89,22 +82,24 @@ const MagneticFieldSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode
             const dist = Math.sqrt(dx*dx + dz*dz);
             const bStrength = (100 / (dist * dist)).toFixed(3);
 
-            setLiveData({ bField: bStrength, alignment: (needleRef.current.rotation.y * 180 / Math.PI).toFixed(1) });
+            setLivePhysicsData({ bField: bStrength, alignment: (needleRef.current.rotation.y * 180 / Math.PI).toFixed(1) });
             onUpdate({ "B Strength": bStrength + " μT", "Needle Angle": (needleRef.current.rotation.y * 180 / Math.PI).toFixed(1) + "°" });
         };
 
         scene.onBeforeRenderObservable.add(animateCompass);
         return () => scene.onBeforeRenderObservable.removeCallback(animateCompass);
-    }, [isRunning, triggerReset, separation, numLines, compassX]);
+    }, [isRunning, separation, compassX, onUpdate]);
+
+    const displayB = livePhysicsData ? livePhysicsData.bField : "0.000";
+    const displayA = livePhysicsData ? livePhysicsData.alignment : "0.0";
 
     const eduData = {
         formula: "B = μ₀I / 2πr",
         variables: {
             "Distance (r)": Math.abs(compassX + separation / 2).toFixed(1) + " m",
-            "B Field": liveData.bField + " μT",
-            "Needle θ": liveData.alignment + "°"
-        },
-        annotations: annotations
+            "B Field": displayB + " μT",
+            "Needle θ": displayA + "°"
+        }
     };
 
     return (

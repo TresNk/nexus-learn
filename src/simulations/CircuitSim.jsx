@@ -3,35 +3,26 @@ import * as BABYLON from '@babylonjs/core';
 import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
 import EduOverlay from '../components/EduOverlay';
 
-const CircuitSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true }) => {
+const CircuitSim = ({ settings, onUpdate, isRunning }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const sceneRef = useRef(null);
     const wireRefs = useRef([]);
     const particleSystemsRef = useRef([]);
-    const [liveData, setLiveData] = useState({
-        voltage: 12,
-        current: 0,
-        rTotal: 0
-    });
-    const [annotations, setAnnotations] = useState([]);
+    const [annotations] = useState([]);
 
     const voltage = Number(settings.voltage) || 12;
     const r1 = Number(settings.r1) || 10;
     const r2 = Number(settings.r2) || 20;
     const config = settings.config || 'series';
     
-    let totalR, currentVal, v1, v2;
+    let totalR, currentVal;
     if (config === 'series') {
         totalR = r1 + r2;
         currentVal = voltage / totalR;
-        v1 = currentVal * r1;
-        v2 = currentVal * r2;
     } else {
         totalR = (r1 * r2) / (r1 + r2);
         currentVal = voltage / totalR;
-        v1 = voltage;
-        v2 = voltage;
     }
 
     useEffect(() => {
@@ -86,12 +77,6 @@ const CircuitSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tru
         ps.particleTexture = new BABYLON.Texture("https://raw.githubusercontent.com/PatrickRyanMS/BabylonJS_Samples/master/ParticleSystems/SoftAlpha/Circle_01.png", scene);
 
         const pathPoints = points;
-        ps.startSpriteCellID = 0;
-        ps.endSpriteCellID = 0;
-        ps.spriteCellHeight = 64;
-        ps.spriteCellWidth = 64;
-
-        // Custom path emitter
         ps.emitter = BABYLON.Vector3.Zero();
         ps.updateFunction = (particles) => {
             for (let index = 0; index < particles.length; index++) {
@@ -99,7 +84,6 @@ const CircuitSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tru
                 p.age += ps._scaledUpdateSpeed;
                 if (p.age >= p.lifeTime) {
                     p.age = 0;
-                    p.pathIndex = 0;
                     p.position.copyFrom(pathPoints[0]);
                 } else {
                     const progress = (p.age / p.lifeTime) * (pathPoints.length - 1);
@@ -124,18 +108,19 @@ const CircuitSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tru
         sceneRef.current = scene;
 
         engine.runRenderLoop(() => scene.render());
-        return () => engine.dispose();
+        const resize = () => engine.resize();
+        window.addEventListener("resize", resize);
+
+        return () => {
+            window.removeEventListener("resize", resize);
+            engine.dispose();
+        };
     }, []);
 
     useEffect(() => {
         if (!sceneRef.current) return;
 
         const currentmA = (currentVal * 1000).toFixed(1);
-        setLiveData({
-            voltage: voltage,
-            current: currentmA,
-            rTotal: totalR.toFixed(1)
-        });
 
         onUpdate({
             voltage: voltage + " V",
@@ -148,22 +133,18 @@ const CircuitSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tru
             particleSystemsRef.current[0].updateSpeed = 0.01 * (currentVal * 2);
         }
 
-        if (triggerReset) {
-            setAnnotations([]);
-        } else if (isRunning) {
-            setAnnotations([{ t: "Circuit Active", text: `Electrons flowing at ${currentmA}mA. Total resistance is ${totalR.toFixed(1)}Ω.` }]);
-        }
+    }, [isRunning, voltage, r1, r2, config, currentVal, totalR, onUpdate]);
 
-    }, [isRunning, triggerReset, voltage, r1, r2, config, currentVal, totalR]);
+    const currentmA_disp = (currentVal * 1000).toFixed(1);
 
     const eduData = {
         formula: config === 'series' ? "R_total = R1 + R2" : "1/R_total = 1/R1 + 1/R2",
         variables: {
             "V": `${voltage} V`,
-            "I": `${liveData.current} mA`,
+            "I": `${currentmA_disp} mA`,
             "R1": `${r1} Ω`,
             "R2": `${r2} Ω`,
-            "R_total": `${liveData.rTotal} Ω`
+            "R_total": `${totalR.toFixed(1)} Ω`
         },
         annotations: annotations
     };
@@ -171,7 +152,7 @@ const CircuitSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tru
     return (
         <div style={{ width: '100%', height: '100%', backgroundColor: '#010204', position: 'relative' }}>
             <canvas ref={canvasRef} style={{ width: '100%', height: '100%', outline: 'none', display: 'block' }} />
-            {eduMode && <EduOverlay {...eduData} />}
+            <EduOverlay {...eduData} />
         </div>
     );
 };

@@ -1,36 +1,28 @@
-import React, { Suspense, useState, useEffect, useCallback } from 'react';
-import { RotateCcw, ArrowLeft, BookOpen, Target, AlertTriangle } from 'lucide-react';
-import { calculatePrediction, getFormula } from '../hooks/useSimulation';
+import React, { Suspense, useState, useCallback, useMemo } from 'react';
+import { RotateCcw, ArrowLeft, BookOpen, Target, AlertTriangle, Info } from 'lucide-react';
+import { calculatePrediction } from '../hooks/useSimulation';
 import ErrorBoundary from './ErrorBoundary';
 import { useSafeSimulation } from '../hooks/useSafeSimulation';
+import TheoryModal from './TheoryModal';
 
 const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, resetKey, setResetKey, onBack, onUpdate, subjectColor, failedSims, onSimError }) => {
     const [eduMode, setEduMode] = useState(true);
+    const [theoryOpen, setTheoryOpen] = useState(false);
     const [predictionMode, setPredictionMode] = useState(false);
     const [userPrediction, setUserPrediction] = useState('');
     const [predictionResult, setPredictionResult] = useState(null);
-    const [expectedValue, setExpectedValue] = useState(null);
     const [simError, setSimError] = useState(false);
     
-    const { error: safeError, isSafeMode, resetError, clearError } = useSafeSimulation(activeExp?.title);
+    const { error: safeError, resetError, clearError } = useSafeSimulation(activeExp?.title);
 
-    const formulaData = getFormula(activeExp?.id);
     const isFailed = failedSims?.some(f => f.id === activeExp?.id);
 
-    useEffect(() => {
-        setSimError(false);
-        clearError();
-        if (activeExp?.id && config) {
-            const pred = calculatePrediction(activeExp.id, config);
-            setExpectedValue(pred);
+    const expectedValue = useMemo(() => {
+        if (activeExp && activeExp.id && config) {
+            return calculatePrediction(activeExp.id, config);
         }
-    }, [activeExp?.id, config]);
-
-    useEffect(() => {
-        if (!isRunning) {
-            setSimError(false);
-        }
-    }, [isRunning]);
+        return null;
+    }, [activeExp, config]);
 
     const handleRun = () => {
         if (isFailed) return;
@@ -105,7 +97,7 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                     <span>
                         {safeError?.message || 'Simulation encountered an issue. You can adjust parameters and try again.'}
                     </span>
-                    <button onClick={handleRetry} style={styles.retryBtn}>Retry</button>
+                    <button onClick={handleRetry} style={styles.retryLink}>Retry</button>
                 </div>
             )}
 
@@ -121,6 +113,13 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                     style={{...styles.topBtn, ...(predictionMode ? styles.topBtnActive : {})}}
                 >
                     <Target size={14} /> {predictionMode ? 'Predict On' : 'Predict Off'}
+                </button>
+
+                <button
+                    onClick={() => setTheoryOpen(true)}
+                    style={{...styles.topBtn, color: '#f59e0b'}}
+                >
+                    <Info size={14} /> Why? (Theory)
                 </button>
                 
                 {predictionMode && expectedValue && (
@@ -145,6 +144,13 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                 )}
             </div>
 
+            <TheoryModal
+                isOpen={theoryOpen}
+                onClose={() => setTheoryOpen(false)}
+                topic={activeExp?.title}
+                content={activeExp?.theory || (activeExp?.description + ". This simulation follows standard scientific principles taught in high school curricula. Use the controls below to observe real-time data changes.")}
+            />
+
             <div style={{ width: '100%', height: '100%' }}>
                 <ErrorBoundary 
                     fallback={<ErrorFallback simulationName={activeExp?.title} onRetry={handleRetry} />}
@@ -157,9 +163,9 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                         </div>
                     }>
                         <activeExp.component
+                            key={activeExp.id + "_" + resetKey}
                             settings={config}
                             isRunning={isRunning}
-                            triggerReset={resetKey}
                             onUpdate={onUpdate}
                             onImpact={() => {
                                 setIsRunning(false);
@@ -243,7 +249,7 @@ const styles = {
         gap: '10px',
         fontSize: '12px',
     },
-    retryBtn: {
+    retryLink: {
         background: 'transparent',
         border: 'none',
         color: '#ef4444',

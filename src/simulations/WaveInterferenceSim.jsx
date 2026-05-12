@@ -3,7 +3,7 @@ import * as BABYLON from '@babylonjs/core';
 import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
 import EduOverlay from '../components/EduOverlay';
 
-const WaveInterferenceSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true }) => {
+const WaveInterferenceSim = ({ settings, onUpdate, isRunning }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const sceneRef = useRef(null);
@@ -31,14 +31,12 @@ const WaveInterferenceSim = ({ settings, onUpdate, isRunning, triggerReset, eduM
         source1.position = new BABYLON.Vector3(-separation / 2, 0.5, 0);
         const s1Mat = new BABYLON.StandardMaterial("s1m", scene);
         s1Mat.diffuseColor = new BABYLON.Color3(0.2, 0.8, 1);
-        s1Mat.emissiveColor = new BABYLON.Color3(0.1, 0.4, 0.5);
         source1.material = s1Mat;
 
         const source2 = BABYLON.MeshBuilder.CreateSphere("s2", { diameter: 1.2 }, scene);
         source2.position = new BABYLON.Vector3(separation / 2, 0.5, 0);
         const s2Mat = new BABYLON.StandardMaterial("s2m", scene);
         s2Mat.diffuseColor = new BABYLON.Color3(1, 0.4, 0.2);
-        s2Mat.emissiveColor = new BABYLON.Color3(0.5, 0.2, 0.1);
         source2.material = s2Mat;
 
         const plane = BABYLON.MeshBuilder.CreateGround("wavePlane", { width: 40, height: 40, subdivisions: 100 }, scene);
@@ -54,16 +52,15 @@ const WaveInterferenceSim = ({ settings, onUpdate, isRunning, triggerReset, eduM
         engine.runRenderLoop(() => scene.render());
         const resize = () => engine.resize();
         window.addEventListener("resize", resize);
-        setTimeout(resize, 100);
 
         return () => {
             window.removeEventListener("resize", resize);
             engine.dispose();
         };
-    }, []);
+    }, [separation]);
 
-    const updateWaves = (t) => {
-        if (!sceneRef.current || !planeRef.current) return;
+    const updateWaves = React.useCallback((t) => {
+        if (!planeRef.current) return;
 
         const positions = planeRef.current.getVerticesData(BABYLON.VertexBuffer.PositionKind);
         const colors = [];
@@ -84,13 +81,12 @@ const WaveInterferenceSim = ({ settings, onUpdate, isRunning, triggerReset, eduM
         }
 
         planeRef.current.setVerticesData(BABYLON.VertexBuffer.ColorKind, colors);
-    };
+    }, [frequency, separation, amplitude]);
 
     useEffect(() => {
         if (!sceneRef.current || !planeRef.current) return;
         
         time.current = 0;
-        setAnnotations([]);
         updateWaves(0);
 
         onUpdate({
@@ -99,7 +95,7 @@ const WaveInterferenceSim = ({ settings, onUpdate, isRunning, triggerReset, eduM
             "wavelength": wavelength.toFixed(2) + " m",
             "nodal lines": nodalLines
         });
-    }, [settings.frequency, settings.separation, settings.amplitude, triggerReset, frequency, separation, amplitude, wavelength, nodalLines]);
+    }, [frequency, separation, wavelength, nodalLines, onUpdate, updateWaves]);
 
     useEffect(() => {
         const scene = sceneRef.current;
@@ -119,19 +115,19 @@ const WaveInterferenceSim = ({ settings, onUpdate, isRunning, triggerReset, eduM
             });
 
             if (time.current > 0.5 && time.current < 0.6) {
-                setAnnotations([{ t: "t=" + time.current.toFixed(1) + "s", text: `Two wave sources separated by ${separation}m. Watch for interference patterns.` }]);
+                setAnnotations([{ t: "t=" + time.current.toFixed(1) + "s", text: `Constructive interference areas appear brighter.` }]);
             }
         };
 
         scene.onBeforeRenderObservable.add(animate);
         return () => scene.onBeforeRenderObservable.removeCallback(animate);
-    }, [isRunning, frequency, separation, amplitude, wavelength, nodalLines]);
+    }, [isRunning, frequency, separation, wavelength, nodalLines, onUpdate, updateWaves]);
 
     const eduData = {
         formula: "d sin(θ) = mλ",
         variables: {
-            "d": `${separation}m (separation)`,
-            "λ": `${wavelength.toFixed(2)}m (wavelength)`,
+            "d": `${separation}m`,
+            "λ": `${wavelength.toFixed(2)}m`,
             "f": `${frequency} Hz`,
             "nodal lines": nodalLines
         },
@@ -141,7 +137,7 @@ const WaveInterferenceSim = ({ settings, onUpdate, isRunning, triggerReset, eduM
     return (
         <div style={{ width: '100%', height: '100%', backgroundColor: '#010204', position: 'relative' }}>
             <canvas ref={canvasRef} style={{ width: '100%', height: '100%', outline: 'none', display: 'block' }} />
-            {eduMode && <EduOverlay {...eduData} />}
+            <EduOverlay {...eduData} />
         </div>
     );
 };

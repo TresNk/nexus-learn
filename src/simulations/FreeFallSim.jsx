@@ -3,25 +3,23 @@ import * as BABYLON from '@babylonjs/core';
 import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
 import EduOverlay from '../components/EduOverlay';
 
-const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, eduMode = true }) => {
+const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, eduMode = true }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const sceneRef = useRef(null);
     const ballRef = useRef(null);
     const time = useRef(0);
     const [annotations, setAnnotations] = useState([]);
-    const [liveData, setLiveData] = useState({ height: 0, velocity: 0, time: 0 });
+    const [livePhysicsData, setLivePhysicsData] = useState(null);
 
     const height = Number(settings.height) || 30;
     const g = 9.81;
-    const fallTime = Math.sqrt(2 * height / g);
-    const terminalVelocity = settings.drag ? 20 : null;
 
     useEffect(() => {
         if (!canvasRef.current) return;
         const engine = new BABYLON.Engine(canvasRef.current, true, { preserveDrawingBuffer: true, stencil: true });
         const scene = new BABYLON.Scene(engine);
-        scene.clearColor = new BABYLON.Color4(0.4, 0.6, 0.9, 1); // Sky color
+        scene.clearColor = new BABYLON.Color4(0.4, 0.6, 0.9, 1);
 
         const envPreset = 'OUTDOOR';
         createLabEnvironment(scene, { preset: envPreset, gridSize: 50, showGrid: true });
@@ -47,7 +45,6 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
         const ball = BABYLON.MeshBuilder.CreateSphere("ball", { diameter: 1.5 }, scene);
         const ballMat = new BABYLON.StandardMaterial("bm", scene);
         ballMat.diffuseColor = new BABYLON.Color3(1, 0.3, 0.3);
-        ballMat.emissiveColor = new BABYLON.Color3(0.4, 0.1, 0.1);
         ball.material = ballMat;
         ballRef.current = ball;
 
@@ -57,7 +54,6 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
         engine.runRenderLoop(() => scene.render());
         const resize = () => engine.resize();
         window.addEventListener("resize", resize);
-        setTimeout(resize, 100);
 
         return () => {
             window.removeEventListener("resize", resize);
@@ -71,8 +67,6 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
         const startHeight = Number(settings.height) || 30;
         ballRef.current.position = new BABYLON.Vector3(0, startHeight, 0);
         time.current = 0;
-        setAnnotations([]);
-        setLiveData({ height: startHeight, velocity: 0, time: 0 });
 
         onUpdate({
             height: startHeight.toFixed(1) + " m",
@@ -80,7 +74,7 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
             time: "0.0 s",
             drag: settings.drag ? "On" : "Off"
         });
-    }, [settings.height, settings.drag, triggerReset]);
+    }, [settings.height, settings.drag, onUpdate]);
 
     useEffect(() => {
         const scene = sceneRef.current;
@@ -107,7 +101,7 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
             ballRef.current.position.y = Math.max(0.75, position);
 
             const currentVel = Math.abs(velocity);
-            setLiveData({ height: position, velocity: currentVel, time: time.current });
+            setLivePhysicsData({ height: position, velocity: currentVel, time: time.current });
 
             onUpdate({
                 height: position.toFixed(1) + " m",
@@ -119,9 +113,8 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
             if (time.current - lastAnnTime > 0.3) {
                 lastAnnTime = time.current;
                 const anns = [
-                    { t: "0.3s", text: `Falling! Velocity = ${velocity.toFixed(1)} m/s. Acceleration = ${acceleration.toFixed(1)} m/s²` },
-                    { t: "0.6s", text: `Height = ${position.toFixed(1)}m. Distance fallen = ${(Number(settings.height) - position).toFixed(1)}m` },
-                    { t: "0.9s", text: `v = gt (ignoring drag): ${(g * time.current).toFixed(1)} m/s` },
+                    { t: "0.3s", text: `Gravity accel: ${acceleration.toFixed(1)} m/s²` },
+                    { t: "0.6s", text: `Distance fallen: ${(Number(settings.height) - position).toFixed(1)}m` },
                 ];
                 const match = anns.find(a => parseFloat(a.t) <= time.current);
                 if (match) setAnnotations(prev => [...prev.slice(-2), match]);
@@ -129,24 +122,27 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
 
             if (position <= 0.75) {
                 ballRef.current.position.y = 0.75;
-                setAnnotations([{ t: "Done", text: `Landed! Fall time = ${time.current.toFixed(2)}s (theoretical: ${fallTime.toFixed(2)}s)` }]);
+                setAnnotations([{ t: "Done", text: `Landed in ${time.current.toFixed(2)}s` }]);
                 onImpact();
             }
         };
 
         scene.onBeforeRenderObservable.add(physicsStep);
         return () => scene.onBeforeRenderObservable.removeCallback(physicsStep);
-    }, [isRunning, settings.drag, settings.mass, onImpact, g, fallTime, settings.height]);
+    }, [isRunning, settings.drag, settings.mass, onImpact, g, settings.height, onUpdate]);
+
+    const curH = livePhysicsData ? livePhysicsData.height : height;
+    const curV = livePhysicsData ? livePhysicsData.velocity : 0;
+    const curT = livePhysicsData ? livePhysicsData.time : 0;
 
     const eduData = {
         formula: "h = h₀ - ½gt²",
         variables: {
-            "h₀": `${height}m (initial height)`,
+            "h₀": `${height}m`,
             "g": "9.81 m/s²",
-            "h": `${liveData.height.toFixed(1)}m`,
-            "v": `${liveData.velocity.toFixed(1)} m/s`,
-            "t": `${liveData.time.toFixed(2)}s`,
-            "fall time": `${fallTime.toFixed(2)}s`
+            "h": `${curH.toFixed(1)}m`,
+            "v": `${curV.toFixed(1)} m/s`,
+            "t": `${curT.toFixed(2)}s`
         },
         annotations: annotations
     };

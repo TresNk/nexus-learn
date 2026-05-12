@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 
 export const usePrediction = (experimentId, config, isRunning) => {
-    const [prediction, setPrediction] = useState(null);
-
-    useEffect(() => {
+    const prediction = useMemo(() => {
         if (!isRunning) {
-            setPrediction(calculatePrediction(experimentId, config));
+            return calculatePrediction(experimentId, config);
         }
-    }, [isRunning]);
+        return null;
+    }, [experimentId, config, isRunning]);
 
     return prediction;
 };
@@ -105,16 +104,9 @@ export const getFormula = (expId) => {
     return formulas[expId] || null;
 };
 
-export const useTelemetry = (experimentId, settings, isRunning) => {
+export const useTelemetry = () => {
     const [telemetry, setTelemetry] = useState({});
     const [history, setHistory] = useState([]);
-
-    useEffect(() => {
-        if (!isRunning) {
-            setTelemetry({});
-            setHistory([]);
-        }
-    }, [isRunning]);
 
     return { telemetry, history, setTelemetry, addToHistory: (entry) => setHistory(prev => [...prev.slice(-50), entry]) };
 };

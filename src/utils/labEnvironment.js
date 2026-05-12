@@ -12,7 +12,7 @@ export const createLabEnvironment = (scene, options = {}) => {
 
     switch (preset) {
         case 'OUTDOOR':
-            groundColor = new BABYLON.Color3(0.1, 0.35, 0.1); // Grass green
+            groundColor = new BABYLON.Color3(0.1, 0.35, 0.1);
             gridColor = new BABYLON.Color3(0.2, 0.5, 0.2);
             emissiveColor = new BABYLON.Color3(0.02, 0.05, 0.02);
             break;
@@ -22,7 +22,7 @@ export const createLabEnvironment = (scene, options = {}) => {
             emissiveColor = new BABYLON.Color3(0.1, 0.1, 0.1);
             break;
         case 'WATER':
-            groundColor = new BABYLON.Color3(0.01, 0.1, 0.15); // Deep teal
+            groundColor = new BABYLON.Color3(0.01, 0.1, 0.15);
             gridColor = new BABYLON.Color3(0.05, 0.25, 0.3);
             emissiveColor = new BABYLON.Color3(0.01, 0.05, 0.08);
             break;
@@ -39,7 +39,6 @@ export const createLabEnvironment = (scene, options = {}) => {
             break;
     }
 
-    // Ground with custom material
     const ground = BABYLON.MeshBuilder.CreateGround("ground", { 
         width: gridSize * 2, 
         height: gridSize * 2,
@@ -52,18 +51,15 @@ export const createLabEnvironment = (scene, options = {}) => {
     groundMat.emissiveColor = emissiveColor;
     ground.material = groundMat;
 
-    // Grid lines
     if (showGrid) {
         const gridLines = [];
         const step = 2;
         
         for (let i = -gridSize; i <= gridSize; i += step) {
-            // X lines
             gridLines.push([
                 new BABYLON.Vector3(i, 0.01, -gridSize),
                 new BABYLON.Vector3(i, 0.01, gridSize)
             ]);
-            // Z lines
             gridLines.push([
                 new BABYLON.Vector3(-gridSize, 0.01, i),
                 new BABYLON.Vector3(gridSize, 0.01, i)
@@ -77,7 +73,6 @@ export const createLabEnvironment = (scene, options = {}) => {
         });
     }
 
-    // Axis indicator
     if (showAxis) {
         const axisX = BABYLON.MeshBuilder.CreateLines("axisX", {
             points: [BABYLON.Vector3.Zero(), new BABYLON.Vector3(5, 0, 0)]
@@ -99,9 +94,12 @@ export const createLabEnvironment = (scene, options = {}) => {
 };
 
 export const createLabLighting = (scene, options = {}) => {
-    const { intensity = 0.8, color = new BABYLON.Color3(0.9, 0.95, 1), preset = 'LAB_DARK' } = options;
+    const {
+        intensity = 0.8,
+        color = new BABYLON.Color3(0.9, 0.95, 1),
+        preset = 'LAB_DARK'
+    } = options;
 
-    // Ambient hemisphere light
     const hemiLight = new BABYLON.HemisphericLight("hemiLight", new BABYLON.Vector3(0, 1, 0), scene);
     hemiLight.intensity = intensity * 0.6;
     hemiLight.diffuse = color;
@@ -115,12 +113,10 @@ export const createLabLighting = (scene, options = {}) => {
         hemiLight.groundColor = new BABYLON.Color3(0.05, 0.08, 0.12);
     }
 
-    // Key light (point)
     const keyLight = new BABYLON.PointLight("keyLight", new BABYLON.Vector3(10, 15, 10), scene);
     keyLight.intensity = intensity * 0.4;
     keyLight.diffuse = color;
 
-    // Rim light for depth
     const rimLight = new BABYLON.PointLight("rimLight", new BABYLON.Vector3(-10, 10, -10), scene);
     rimLight.intensity = intensity * 0.2;
     rimLight.diffuse = new BABYLON.Color3(0.4, 0.6, 1);
@@ -135,12 +131,18 @@ export const createLabCamera = (scene, target = BABYLON.Vector3.Zero(), options 
         radius = 25,
         lowerRadiusLimit = 5,
         upperRadiusLimit = 100,
-        panningEnabled = true
+        panningEnabled = true,
+        pinchPrecision = 12,
+        wheelPrecision = 12
     } = options;
 
     const camera = new BABYLON.ArcRotateCamera("camera", alpha, beta, radius, target, scene);
     camera.attachControl(scene.getEngine().getRenderingCanvas(), true);
     
+    camera.pinchPrecision = pinchPrecision;
+    camera.wheelPrecision = wheelPrecision;
+    camera.allowUpsideDown = false;
+
     camera.lowerRadiusLimit = lowerRadiusLimit;
     camera.upperRadiusLimit = upperRadiusLimit;
     camera.lowerBetaLimit = 0.1;
@@ -172,7 +174,7 @@ export const createLabSkybox = (scene, options = {}) => {
     
     switch (preset) {
         case 'OUTDOOR':
-            skyboxMaterial.diffuseColor = new BABYLON.Color3(0.4, 0.6, 0.9); // Sky blue
+            skyboxMaterial.diffuseColor = new BABYLON.Color3(0.4, 0.6, 0.9);
             skyboxMaterial.emissiveColor = new BABYLON.Color3(0.1, 0.2, 0.4);
             break;
         case 'LAB_WHITE':
@@ -182,7 +184,6 @@ export const createLabSkybox = (scene, options = {}) => {
         case 'SPACE':
             skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
             skyboxMaterial.emissiveColor = new BABYLON.Color3(0.01, 0.01, 0.02);
-            // We could add stars here with a procedural texture if we wanted
             break;
         case 'LAB_DARK':
         default:

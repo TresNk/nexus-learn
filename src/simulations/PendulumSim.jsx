@@ -3,7 +3,7 @@ import * as BABYLON from '@babylonjs/core';
 import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
 import EduOverlay from '../components/EduOverlay';
 
-const PendulumSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true }) => {
+const PendulumSim = ({ settings, onUpdate, isRunning, eduMode = true }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const sceneRef = useRef(null);
@@ -13,14 +13,13 @@ const PendulumSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tr
     const thetaRef = useRef(0);
     const velocityArrowRef = useRef(null);
     const [annotations, setAnnotations] = useState([]);
-    const [liveData, setLiveData] = useState({ theta: 0, velocity: 0, time: 0 });
+    const [livePhysicsData, setLivePhysicsData] = useState(null);
 
     const length = Number(settings.length) || 8;
     const initialAngle = (Number(settings.angle) || 45) * Math.PI / 180;
     const g = 9.81;
     const omega = Math.sqrt(g / length);
     const period = 2 * Math.PI * Math.sqrt(length / g);
-    const maxTheta = initialAngle * Math.exp(-omega * 0.5);
 
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -58,24 +57,21 @@ const PendulumSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tr
         engine.runRenderLoop(() => scene.render());
         const resize = () => engine.resize();
         window.addEventListener("resize", resize);
-        setTimeout(resize, 100);
 
         return () => {
             window.removeEventListener("resize", resize);
             engine.dispose();
         };
-    }, []);
+    }, [length]);
 
     useEffect(() => {
         if (!sceneRef.current || !bobRef.current || !rodRef.current) return;
 
         thetaRef.current = initialAngle;
         time.current = 0;
-        setAnnotations([]);
-        setLiveData({ theta: initialAngle, velocity: 0, time: 0 });
 
         const rodLength = length;
-        rodRef.current.scaling.y = rodLength / 8;
+        rodRef.current.scaling.y = rodLength / length; // Relative to current length
         rodRef.current.position.y = 10 - rodLength / 2;
 
         const x = rodLength * Math.sin(initialAngle);
@@ -85,10 +81,10 @@ const PendulumSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tr
         onUpdate({
             period: period.toFixed(2) + " s",
             frequency: (1 / period).toFixed(2) + " Hz",
-            theta: (thetaRef.current * 180 / Math.PI).toFixed(1) + "°",
+            theta: (initialAngle * 180 / Math.PI).toFixed(1) + "°",
             length: length + " m"
         });
-    }, [settings.length, settings.angle, triggerReset, initialAngle, length, period]);
+    }, [initialAngle, length, period, onUpdate]);
 
     useEffect(() => {
         const scene = sceneRef.current;
@@ -113,7 +109,8 @@ const PendulumSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tr
 
             if (velocityArrowRef.current) velocityArrowRef.current.dispose();
             const velocity = length * omega * Math.abs(Math.sin(omega * time.current)) * Math.exp(-damping * time.current);
-            setLiveData({ theta: thetaRef.current, velocity, time: time.current });
+
+            setLivePhysicsData({ theta: thetaRef.current, velocity, time: time.current });
 
             const arrowLen = velocity / 3;
             const tangentAngle = thetaRef.current + Math.PI / 2;
@@ -137,33 +134,32 @@ const PendulumSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tr
 
             if (time.current - lastAnnTime > 0.5 && time.current < 3) {
                 lastAnnTime = time.current;
-                const annotations = [
-                    { t: "t=0.5s", text: `Starting from ${settings.angle}° with angular velocity ${omega.toFixed(2)} rad/s` },
-                    { t: "t=1.0s", text: `Maximum speed at lowest point. θ = ${currentThetaDeg}°` },
-                    { t: "t=1.5s", text: `Damping reducing amplitude. Energy = ½mω²A²` },
+                const anns = [
+                    { t: "t=0.5s", text: `Angular velocity ${omega.toFixed(2)} rad/s` },
+                    { t: "t=1.0s", text: `Max speed at center. θ = ${currentThetaDeg}°` },
                 ];
-                const match = annotations.find(a => parseFloat(a.t.split('=')[1]) <= time.current);
+                const match = anns.find(a => parseFloat(a.t.split('=')[1]) <= time.current);
                 if (match) setAnnotations(prev => [...prev.slice(-2), match]);
-            }
-
-            if (thetaRef.current < 0.01 && time.current > 2) {
-                setAnnotations([{ t: "Done", text: `Oscillation complete. Period = ${period.toFixed(2)}s` }]);
             }
         };
 
         scene.onBeforeRenderObservable.add(physicsStep);
         return () => scene.onBeforeRenderObservable.removeCallback(physicsStep);
-    }, [isRunning, length, omega, initialAngle, period, settings.angle]);
+    }, [isRunning, length, omega, initialAngle, period, onUpdate]);
+
+    const displayTheta = livePhysicsData ? livePhysicsData.theta : initialAngle;
+    const displayVel = livePhysicsData ? livePhysicsData.velocity : 0;
+    const displayTime = livePhysicsData ? livePhysicsData.time : 0;
 
     const eduData = {
         formula: "T = 2π√(L/g)",
         variables: {
-            "L": `${length}m (length)`,
+            "L": `${length}m`,
             "g": "9.81 m/s²",
-            "T": `${period.toFixed(2)}s (period)`,
-            "θ": `${(liveData.theta * 180 / Math.PI).toFixed(1)}°`,
-            "v": `${liveData.velocity.toFixed(2)} m/s`,
-            "t": `${liveData.time.toFixed(2)}s`
+            "T": `${period.toFixed(2)}s`,
+            "θ": `${(displayTheta * 180 / Math.PI).toFixed(1)}°`,
+            "v": `${displayVel.toFixed(2)} m/s`,
+            "t": `${displayTime.toFixed(2)}s`
         },
         annotations: annotations
     };
