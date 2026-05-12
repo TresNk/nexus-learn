@@ -82,6 +82,31 @@ export const calculatePrediction = (expId, config) => {
             const peakEmf = (v * n * b * 0.1).toFixed(1);
             return { type: 'emf', value: peakEmf, unit: 'mV', label: 'Peak EMF' };
         }
+        case 'CHEM_TITRATION': {
+            const ma = config.acidConcentration || 0.1;
+            const va = config.acidVolume || 25;
+            const mb = config.baseConcentration || 0.1;
+            const veq = (ma * va) / mb;
+            return { type: 'volume', value: veq.toFixed(1), unit: 'mL', label: 'Equivalence Point' };
+        }
+        case 'PHOTOSYNTHESIS': {
+            const light = config.lightIntensity || 50;
+            const co2 = config.co2Level || 400;
+            const rate = (light / 100) * (co2 / 400) * 10;
+            return { type: 'rate', value: rate.toFixed(2), unit: 'mmol/s', label: 'Oxygen Rate' };
+        }
+        case 'CLIMATE_PATTERNS': {
+            const tilt = config.tilt || 23.5;
+            const month = config.month || 'June';
+            const monthOffset = month === 'June' ? 1 : month === 'December' ? -1 : 0;
+            const intensity = 1000 * Math.cos((tilt * -monthOffset * Math.PI) / 180);
+            return { type: 'insolation', value: intensity.toFixed(0), unit: 'W/m²', label: 'Solar Intensity' };
+        }
+        case 'PLATE_TECTONICS': {
+            const speed = config.subductionSpeed || 5;
+            const displacement = speed * 10; // in 10 years mock
+            return { type: 'displacement', value: displacement.toFixed(1), unit: 'cm', label: '10yr Movement' };
+        }
         default:
             return null;
     }
@@ -100,6 +125,11 @@ export const getFormula = (expId) => {
         'REFRACTION_SNELL': { formula: 'n₁sin(θ₁) = n₂sin(θ₂)', variables: ['n (refractive index)', 'θ (angle)'] },
         'MAGNETIC_FIELD': { formula: 'B = μ₀I / 2πr', variables: ['r (distance)', 'I (current)'] },
         'ELECTROMAGNETIC_INDUCTION': { formula: 'ε = -N (ΔΦ / Δt)', variables: ['N (turns)', 'Φ (magnetic flux)', 't (time)'] },
+        'CHEM_TITRATION': { formula: 'M₁V₁ = M₂V₂', variables: ['M (molarity)', 'V (volume)'] },
+        'CELL_STRUCTURE': { formula: 'A = πr²', variables: ['r (cell radius)'] },
+        'PHOTOSYNTHESIS': { formula: '6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂', variables: ['CO₂ (carbon dioxide)', 'H₂O (water)'] },
+        'PLATE_TECTONICS': { formula: 'v = d / t', variables: ['v (velocity)', 'd (distance)', 't (time)'] },
+        'CLIMATE_PATTERNS': { formula: 'I = S₀ cos(θ)', variables: ['I (insolation)', 'S₀ (solar constant)', 'θ (angle)'] },
     };
     return formulas[expId] || null;
 };
