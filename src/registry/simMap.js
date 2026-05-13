@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, Activity, Beaker, FlaskConical, Wind, Clock, ArrowDown, Link2, Waves, Zap, Plug, Eye, Magnet, Globe, Microscope, Mountain, TreeDeciduous, ThermometerSun } from 'lucide-react';
+import { Target, Activity, Beaker, FlaskConical, Wind, Clock, ArrowDown, Link2, Waves, Zap, Plug, Eye, Magnet, Globe, Microscope, Mountain, TreeDeciduous, ThermometerSun, Orbit, Atom, Scale, Dna, Copy, Heart, CloudRain, Gem, Hexagon } from 'lucide-react';
 
 const ProjectileSim = React.lazy(() => import('../simulations/ProjectileSim'));
 const DynamicsSim = React.lazy(() => import('../simulations/DynamicsSim'));
@@ -12,11 +12,22 @@ const CircuitSim = React.lazy(() => import('../simulations/CircuitSim'));
 const RefractionSim = React.lazy(() => import('../simulations/RefractionSim'));
 const MagneticFieldSim = React.lazy(() => import('../simulations/MagneticFieldSim'));
 const ElectromagneticSim = React.lazy(() => import('../simulations/ElectromagneticSim'));
+const CircularMotionSim = React.lazy(() => import('../simulations/CircularMotionSim'));
+const GasLawsSim = React.lazy(() => import('../simulations/GasLawsSim'));
 const ChemistrySim = React.lazy(() => import('../simulations/ChemistrySim'));
+const AtomicStructureSim = React.lazy(() => import('../simulations/AtomicStructureSim'));
+const MolecularSim = React.lazy(() => import('../simulations/MolecularSim'));
+const EquilibriumSim = React.lazy(() => import('../simulations/EquilibriumSim'));
 const CellSim = React.lazy(() => import('../simulations/CellSim'));
 const PhotosynthesisSim = React.lazy(() => import('../simulations/PhotosynthesisSim'));
+const DnaSim = React.lazy(() => import('../simulations/DnaSim'));
+const MitosisSim = React.lazy(() => import('../simulations/MitosisSim'));
+const HeartSim = React.lazy(() => import('../simulations/HeartSim'));
 const TectonicsSim = React.lazy(() => import('../simulations/TectonicsSim'));
 const ClimateSim = React.lazy(() => import('../simulations/ClimateSim'));
+const WaterCycleSim = React.lazy(() => import('../simulations/WaterCycleSim'));
+const RockCycleSim = React.lazy(() => import('../simulations/RockCycleSim'));
+const RiverSim = React.lazy(() => import('../simulations/RiverSim'));
 
 export const SUBJECTS = [
     {
@@ -146,6 +157,28 @@ export const SUBJECTS = [
                 difficulty: 3,
                 sims: ['galvanometer', 'flux change', 'coil speed'],
                 initialConfig: { velocity: 5, turns: 10, fieldStrength: 5 }
+            },
+            {
+                id: 'CIRCULAR_MOTION',
+                title: 'Circular Motion',
+                icon: Orbit,
+                component: CircularMotionSim,
+                description: 'Explore centripetal force and orbital velocity.',
+                theory: 'Objects in circular motion require a centripetal force acting toward the center. Real-world application: Satellites stay in orbit due to the balance of gravity and their velocity. Highway engineers design banked curves so cars can safely navigate turns at high speeds without skidding.',
+                difficulty: 2,
+                sims: ['orbital path', 'force vector', 'radius slider'],
+                initialConfig: { radius: 10, velocity: 5, mass: 2 }
+            },
+            {
+                id: 'GAS_LAWS',
+                title: 'Gas Laws (P-V-T)',
+                icon: Wind,
+                component: GasLawsSim,
+                description: 'Simulate Boyle\'s and Charles\'s laws with molecular kinetic theory.',
+                theory: 'The Ideal Gas Law (PV=nRT) relates pressure, volume, and temperature. Real-world application: Scuba divers must understand Boyle\'s law to avoid "the bends." Car tires and aerosol cans include warnings about heat because pressure increases with temperature.',
+                difficulty: 2,
+                sims: ['piston', 'temp slider', 'collision counter'],
+                initialConfig: { volume: 50, temperature: 300, particles: 50 }
             }
         ]
     },
@@ -166,6 +199,39 @@ export const SUBJECTS = [
                 difficulty: 2,
                 sims: ['pH curve', 'indicator', 'molarity'],
                 initialConfig: { acidVolume: 25, acidConcentration: 0.1, baseConcentration: 0.1 }
+            },
+            {
+                id: 'ATOMIC_STRUCTURE',
+                title: 'Atomic Structure',
+                icon: Atom,
+                component: AtomicStructureSim,
+                description: 'Build atoms with protons, neutrons, and electrons.',
+                theory: 'Atoms are composed of a central nucleus orbited by electrons in specific energy shells. Real-world application: Semi-conductors in your smartphone rely on the movement of electrons between these energy levels. Nuclear medicine uses isotopes (atoms with extra neutrons) for life-saving cancer treatments.',
+                difficulty: 1,
+                sims: ['shell filler', 'isotope calc', 'stability meter'],
+                initialConfig: { protons: 6, neutrons: 6, electrons: 6 }
+            },
+            {
+                id: 'MOLECULAR_GEOMETRY',
+                title: 'Molecular Geometry',
+                icon: Hexagon,
+                component: MolecularSim,
+                description: 'Explore VSEPR theory and 3D molecular shapes.',
+                theory: 'Molecules take specific shapes to minimize electron repulsion. Real-world application: The "lock and key" mechanism of drugs in the human body depends entirely on molecular shape. Water\'s "bent" shape is the reason it can dissolve so many substances and why ice floats.',
+                difficulty: 2,
+                sims: ['shape viewer', 'bond angle', 'polarity'],
+                initialConfig: { molecule: 'H2O' }
+            },
+            {
+                id: 'CHEM_EQUILIBRIUM',
+                title: 'Chemical Equilibrium',
+                icon: Scale,
+                component: EquilibriumSim,
+                description: 'Observe Le Chatelier\'s principle in a reversible reaction.',
+                theory: 'Systems at equilibrium respond to stress by shifting to counteract it. Real-world application: The Haber process uses these principles to produce fertilizer for half the world\'s food supply. Your blood maintains a constant pH using equilibrium buffers that respond to CO2 levels.',
+                difficulty: 3,
+                sims: ['conc shift', 'temp effect', 'k_eq graph'],
+                initialConfig: { temp: 298, concentrationA: 1.0, concentrationB: 0.0 }
             }
         ]
     },
@@ -197,6 +263,39 @@ export const SUBJECTS = [
                 difficulty: 2,
                 sims: ['light intensity', 'CO2 levels', 'gas meter'],
                 initialConfig: { lightIntensity: 50, co2Level: 400 }
+            },
+            {
+                id: 'DNA_STRUCTURE',
+                title: 'DNA Double Helix',
+                icon: Dna,
+                component: DnaSim,
+                description: 'Interact with the 3D structure of genetic information.',
+                theory: 'DNA stores biological instructions in a twisted ladder shape made of base pairs. Real-world application: CRISPR gene editing allows scientists to fix mutations directly in the DNA. Forensic scientists use specific DNA patterns to solve crimes with incredible accuracy.',
+                difficulty: 1,
+                sims: ['base pair zoom', 'replication', 'mutation tool'],
+                initialConfig: { sequence: 'ATGC', zoom: 1 }
+            },
+            {
+                id: 'MITOSIS_STAGES',
+                title: 'Cell Division (Mitosis)',
+                icon: Copy,
+                component: MitosisSim,
+                description: 'Watch the stages of a cell cloning itself.',
+                theory: 'Mitosis is how somatic cells divide into two identical daughter cells. Real-world application: Wound healing and skin regeneration depend on constant mitosis. Cancer is essentially mitosis that has gone out of control, making this study vital for oncology.',
+                difficulty: 2,
+                sims: ['phase slider', 'chromosome view', 'checkpoints'],
+                initialConfig: { speed: 1, currentPhase: 'interphase' }
+            },
+            {
+                id: 'HUMAN_HEART',
+                title: 'Human Heart / Circulation',
+                icon: Heart,
+                component: HeartSim,
+                description: 'Explore the 3D anatomy and pumping cycle of the heart.',
+                theory: 'The heart is a double-pump system moving blood through pulmonary and systemic loops. Real-world application: Pacemakers use electrical signals to correct heart rhythms. Understanding flow dynamics helps surgeons design artificial heart valves and stents.',
+                difficulty: 3,
+                sims: ['valve cam', 'bpm slider', 'oxygenation view'],
+                initialConfig: { bpm: 72, view: 'interior' }
             }
         ]
     },
@@ -228,6 +327,39 @@ export const SUBJECTS = [
                 difficulty: 1,
                 sims: ['tilt angle', 'orbit speed', 'insolation map'],
                 initialConfig: { tilt: 23.5, month: 'June' }
+            },
+            {
+                id: 'WATER_CYCLE',
+                title: 'The Water Cycle',
+                icon: CloudRain,
+                component: WaterCycleSim,
+                description: 'Trace a water molecule through Earth\'s atmosphere and surface.',
+                theory: 'Water moves through evaporation, condensation, and precipitation in a closed system. Real-world application: Predicting floods and droughts depends on accurate cycle modeling. Desalination plants use these principles to create drinking water from the ocean.',
+                difficulty: 1,
+                sims: ['heat source', 'precip slider', 'groundwater'],
+                initialConfig: { heat: 50, humidity: 60 }
+            },
+            {
+                id: 'ROCK_CYCLE',
+                title: 'Rock Cycle & Geology',
+                icon: Gem,
+                component: RockCycleSim,
+                description: 'Transform rocks through heat, pressure, and time.',
+                theory: 'Rocks continuously change between igneous, sedimentary, and metamorphic states. Real-world application: Civil engineers must understand rock types to build stable skyscrapers and tunnels. The fossil fuels that power modern life are found only in specific layers of sedimentary rock.',
+                difficulty: 2,
+                sims: ['magma chamber', 'erosion', 'pressure tool'],
+                initialConfig: { depth: 10, pressure: 50, temperature: 500 }
+            },
+            {
+                id: 'RIVER_DYNAMICS',
+                title: 'River Dynamics / Erosion',
+                icon: Waves,
+                component: RiverSim,
+                description: 'Simulate how rivers shape the landscape through erosion.',
+                theory: 'Rivers move sediment based on velocity and volume, creating meanders and deltas. Real-world application: Cities like New Orleans or Venice rely on meander management for flood protection. Agricultural irrigation depends on understanding silt deposition patterns.',
+                difficulty: 2,
+                sims: ['gradient slider', 'flow rate', 'sediment load'],
+                initialConfig: { slope: 5, flow: 100 }
             }
         ]
     }
