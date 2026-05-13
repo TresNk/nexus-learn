@@ -1,3 +1,9 @@
+/**
+ * GenericSimulation Engine
+ *
+ * A schema-driven 3D engine built on Babylon.js. It interprets configuration objects
+ * (from AI or Nexus Creator) to dynamically generate scientific visualizations.
+ */
 import React, { useEffect, useRef } from 'react';
 import * as BABYLON from '@babylonjs/core';
 import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
@@ -19,14 +25,30 @@ const GenericSimulation = ({ settings, onUpdate, isRunning }) => {
         createLabLighting(scene);
         createLabCamera(scene, new BABYLON.Vector3(0, 2, 0), { radius: 15 });
 
-        // Placeholder object
-        const box = BABYLON.MeshBuilder.CreateBox("placeholder", { size: 2 }, scene);
-        box.position.y = 2;
-        const mat = new BABYLON.StandardMaterial("placeholderMat", scene);
-        mat.diffuseColor = new BABYLON.Color3(0.2, 0.5, 1);
-        mat.emissiveColor = new BABYLON.Color3(0.1, 0.2, 0.4);
-        box.material = mat;
-        objectRef.current = box;
+        /*
+           Schema-driven mesh generation.
+           Interprets 'shape' parameter to create the primary actor.
+        */
+        const meshType = settings.shape || 'box';
+        let mesh;
+        if (meshType === 'sphere') {
+            mesh = BABYLON.MeshBuilder.CreateSphere("obj", { diameter: 2 }, scene);
+        } else if (meshType === 'cylinder') {
+            mesh = BABYLON.MeshBuilder.CreateCylinder("obj", { diameter: 2, height: 3 }, scene);
+        } else {
+            mesh = BABYLON.MeshBuilder.CreateBox("obj", { size: 2 }, scene);
+        }
+
+        mesh.position.y = 2;
+        const mat = new BABYLON.StandardMaterial("objMat", scene);
+
+        // Dynamic color from settings or default
+        const colorHex = settings.color || "#3b82f6";
+        mat.diffuseColor = BABYLON.Color3.FromHexString(colorHex);
+        mat.emissiveColor = mat.diffuseColor.scale(0.2);
+
+        mesh.material = mat;
+        objectRef.current = mesh;
 
         engineRef.current = engine;
         sceneRef.current = scene;
@@ -50,13 +72,20 @@ const GenericSimulation = ({ settings, onUpdate, isRunning }) => {
 
         const rotationStep = () => {
             if (isRunning && objectRef.current) {
-                objectRef.current.rotation.y += 0.02;
-                objectRef.current.rotation.x += 0.01;
+                const speed = (Number(settings.speed) || 1) * 0.02;
+                objectRef.current.rotation.y += speed;
+
+                // Scale based on mass if provided
+                if (settings.mass) {
+                    const s = Math.max(0.5, Math.min(3, Number(settings.mass) / 5));
+                    objectRef.current.scaling.setAll(s);
+                }
 
                 // Mock telemetry
                 onUpdate({
-                    status: "AI Generated",
-                    rotation: (objectRef.current.rotation.y % (Math.PI * 2)).toFixed(2),
+                    status: settings.isCreator ? "Creator Mode" : "AI Generated",
+                    velocity: (speed * 100).toFixed(1) + " units/s",
+                    scale: objectRef.current.scaling.x.toFixed(2),
                     active: isRunning ? "YES" : "NO"
                 });
             }

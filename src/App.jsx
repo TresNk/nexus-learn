@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { SUBJECTS } from './registry/simMap';
 import LabStage from './components/LabStage';
 import { getNexusResponse, generateSimulationConfig } from './services/aiService';
-import { BrainCircuit, LayoutDashboard, Send, Loader2, Sparkles } from 'lucide-react';
+import { BrainCircuit, LayoutDashboard, Send, Loader2, Sparkles, PlusSquare } from 'lucide-react';
 import { useSafeRegistry } from './registry/SafeRegistry';
+import NexusCreator from './components/NexusCreator';
 
 function App() {
   const [view, setView] = useState('DASHBOARD');
+  const [isCreatorOpen, setIsCreatorOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [activeExp, setActiveExp] = useState(null);
   const [config, setConfig] = useState({});
@@ -15,7 +17,7 @@ function App() {
   const [liveData, setLiveData] = useState({});
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const { subjects, addGeneratedSim, failedSims, markFailed, clearFailed } = useSafeRegistry(SUBJECTS);
+  const { subjects, addGeneratedSim, failedSims, markFailed, clearFailed, addCreatorSim } = useSafeRegistry(SUBJECTS);
 
   // --- CHAT STATE ---
   const [userInput, setUserInput] = useState("");
@@ -120,6 +122,11 @@ function App() {
           style={{ marginTop: '40px', cursor: 'pointer' }}
           color={view === 'DASHBOARD' ? "#3b82f6" : "#475569"}
         />
+        <PlusSquare
+          onClick={() => setIsCreatorOpen(true)}
+          style={{ marginTop: '20px', cursor: 'pointer' }}
+          color={isCreatorOpen ? "#fbbf24" : "#475569"}
+        />
       </nav>
 
       {/* DYNAMIC VIEW */}
@@ -184,6 +191,16 @@ function App() {
           onUpdate={setLiveData}
           failedSims={failedSims}
           onSimError={(expId, error) => markFailed(expId, error)}
+        />
+      )}
+
+      {isCreatorOpen && (
+        <NexusCreator
+          onCancel={() => setIsCreatorOpen(false)}
+          onSave={(draft) => {
+            addCreatorSim(draft);
+            setIsCreatorOpen(false);
+          }}
         />
       )}
 
