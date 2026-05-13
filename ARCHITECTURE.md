@@ -11,7 +11,7 @@ Nexus Learn is an AI-augmented educational platform designed for high-fidelity s
 
 ### B. The Execution Engine (`src/components/`)
 - **LabStage.jsx**: The host environment for all experiments. It provides the "Edu-First" UI, including prediction inputs, real-world application theory modals, and telemetry HUDs.
-- **GenericSimulation.jsx**: A schema-driven 3D engine built on Babylon.js. It interprets configuration objects (mass, speed, shape, color) to render interactive models without requiring custom code for every experiment.
+- **simulations/GenericSimulation.jsx**: A schema-driven 3D engine built on Babylon.js. It interprets configuration objects (mass, speed, shape, color) to render interactive models for AI-generated and custom user experiments.
 
 ### C. The Nexus Creator Sandbox
 - A dedicated workspace for users to define their own scientific mechanisms. It generates a "Logic Schema" that the Generic Engine then visualizes.

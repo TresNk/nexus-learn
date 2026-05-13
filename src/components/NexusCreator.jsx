@@ -7,7 +7,7 @@
  */
 import React, { useState } from 'react';
 import { X, Play, Save, Plus, Trash2, Layout, BookOpen, Settings as SettingsIcon } from 'lucide-react';
-import GenericSimulation from './GenericSimulation';
+import GenericSimulation from '../simulations/GenericSimulation';
 
 const NexusCreator = ({ onSave, onCancel }) => {
     const [draft, setDraft] = useState(() => ({

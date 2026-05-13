@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import GenericSimulation from '../components/GenericSimulation';
+import GenericSimulation from '../simulations/GenericSimulation';
 
 export const validateSimulation = (sim) => {
     const requiredFields = ['id', 'title', 'component', 'initialConfig'];
