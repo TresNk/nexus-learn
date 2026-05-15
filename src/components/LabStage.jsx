@@ -299,12 +299,12 @@ const styles = {
     expectedLabel: { fontSize: '11px', color: '#10b981', fontWeight: 'bold' },
     predInput: { background: 'transparent', border: 'none', color: '#fbbf24', padding: '4px 8px', width: '120px', fontSize: '12px', outline: 'none' },
     predResult: { fontSize: '12px', fontWeight: 'bold', whiteSpace: 'nowrap' },
-    hud: { position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '25px', padding: '20px 35px', backgroundColor: 'rgba(5,10,20,0.9)', backdropFilter: 'blur(15px)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', zIndex: 100, flexWrap: 'wrap', justifyContent: 'center', maxWidth: '80%' },
-    inputGroup: { display: 'flex', flexDirection: 'column', gap: '5px' },
-    label: { fontSize: '9px', color: '#3b82f6', fontWeight: 'bold' },
-    input: { background: '#000', border: '1px solid #333', color: 'white', padding: '8px', borderRadius: '8px', width: '60px', outline: 'none' },
-    btn: { border: 'none', padding: '12px 25px', color: 'white', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' },
-    resetBtn: { background: 'rgba(255,255,255,0.05)', border: 'none', padding: '10px', color: 'white', borderRadius: '10px', cursor: 'pointer' },
+    hud: { position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '30px', padding: '20px 40px', backgroundColor: 'rgba(5,10,20,0.8)', backdropFilter: 'blur(20px)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', zIndex: 100, flexWrap: 'wrap', justifyContent: 'center', maxWidth: '85%', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' },
+    inputGroup: { display: 'flex', flexDirection: 'column', gap: '6px' },
+    label: { fontSize: '10px', color: '#3b82f6', fontWeight: '800', letterSpacing: '0.5px' },
+    input: { background: 'rgba(0,0,0,0.5)', border: '1px solid #1e293b', color: 'white', padding: '10px 12px', borderRadius: '12px', width: '70px', outline: 'none', fontSize: '13px', transition: 'border-color 0.2s' },
+    btn: { border: 'none', padding: '14px 30px', color: 'white', borderRadius: '14px', cursor: 'pointer', fontWeight: '800', fontSize: '13px', letterSpacing: '0.5px', transition: 'transform 0.2s, filter 0.2s' },
+    resetBtn: { background: 'rgba(255,255,255,0.05)', border: 'none', padding: '12px', color: '#64748b', borderRadius: '14px', cursor: 'pointer', transition: 'color 0.2s, background 0.2s' },
     
     errorFallback: {
         width: '100%',
