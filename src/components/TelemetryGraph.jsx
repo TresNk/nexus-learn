@@ -1,30 +1,28 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 const TelemetryGraph = ({ data, activeKey, color = '#3b82f6' }) => {
     const canvasRef = useRef(null);
-    const [history, setHistory] = useState([]);
+    const historyRef = useRef([]);
     const maxPoints = 50;
 
     useEffect(() => {
-        if (data && data[activeKey] !== undefined) {
-            const val = parseFloat(data[activeKey]);
-            if (!isNaN(val)) {
-                setHistory(prev => {
-                    const next = [...prev, val];
-                    if (next.length > maxPoints) return next.slice(1);
-                    return next;
-                });
-            }
-        }
-    }, [data, activeKey]);
+        if (!data || data[activeKey] === undefined) return;
 
-    useEffect(() => {
+        const val = parseFloat(data[activeKey]);
+        if (isNaN(val)) return;
+
+        // Update history in ref to avoid cascading renders
+        const next = [...historyRef.current, val];
+        historyRef.current = next.length > maxPoints ? next.slice(1) : next;
+
+        // Draw directly
         const canvas = canvasRef.current;
-        if (!canvas || history.length < 2) return;
+        if (!canvas || historyRef.current.length < 2) return;
 
         const ctx = canvas.getContext('2d');
         const width = canvas.width;
         const height = canvas.height;
+        const history = historyRef.current;
 
         ctx.clearRect(0, 0, width, height);
 
@@ -49,9 +47,9 @@ const TelemetryGraph = ({ data, activeKey, color = '#3b82f6' }) => {
         ctx.lineWidth = 2;
         ctx.lineJoin = 'round';
 
-        history.forEach((val, i) => {
+        history.forEach((v, i) => {
             const x = (width / (maxPoints - 1)) * i;
-            const y = height - ((val - min) / range) * height;
+            const y = height - ((v - min) / range) * height;
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         });
@@ -66,8 +64,7 @@ const TelemetryGraph = ({ data, activeKey, color = '#3b82f6' }) => {
         gradient.addColorStop(1, 'transparent');
         ctx.fillStyle = gradient;
         ctx.fill();
-
-    }, [history, color]);
+    }, [data, activeKey, color]);
 
     return (
         <div style={{ marginTop: '10px' }}>

@@ -94,7 +94,7 @@ function App() {
             }
 
             setChatLog(prev => [...prev, { role: 'nexus', text: parts[0].trim() }]);
-          } catch (e) {
+          } catch {
             setChatLog(prev => [...prev, { role: 'nexus', text: response }]);
           }
         } else {
@@ -258,10 +258,10 @@ function App() {
               </div>
 
               {/* Plot the first numeric value available */}
-              {Object.entries(liveData).find(([_, v]) => !isNaN(parseFloat(v))) && (
+              {Object.entries(liveData).find(([, v]) => !isNaN(parseFloat(v))) && (
                 <TelemetryGraph
                   data={liveData}
-                  activeKey={Object.entries(liveData).find(([_, v]) => !isNaN(parseFloat(v)))[0]}
+                  activeKey={Object.entries(liveData).find(([, v]) => !isNaN(parseFloat(v)))[0]}
                 />
               )}
             </div>

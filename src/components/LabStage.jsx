@@ -1,5 +1,5 @@
 import React, { Suspense, useState, useCallback, useMemo } from 'react';
-import { RotateCcw, ArrowLeft, BookOpen, Target, AlertTriangle, Info } from 'lucide-react';
+import { RotateCcw, ArrowLeft, BookOpen, Target, AlertTriangle, Info, Trophy } from 'lucide-react';
 import { calculatePrediction } from '../hooks/useSimulation';
 import ErrorBoundary from './ErrorBoundary';
 import { useSafeSimulation } from '../hooks/useSafeSimulation';
@@ -13,6 +13,8 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
     const [predictionMode, setPredictionMode] = useState(false);
     const [userPrediction, setUserPrediction] = useState('');
     const [predictionResult, setPredictionResult] = useState(null);
+    const [challengeActive, setChallengeActive] = useState(false);
+    const [challengeStatus, setChallengeStatus] = useState(null); // 'SUCCESS' | 'FAILED' | 'PENDING'
     const [simError, setSimError] = useState(false);
     
     const { error: safeError, resetError, clearError } = useSafeSimulation(activeExp?.title);
@@ -40,6 +42,11 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
         } else {
             setPredictionResult(null);
         }
+
+        if (challengeActive) {
+            setChallengeStatus('PENDING');
+        }
+
         setIsRunning(true);
     };
 
@@ -47,6 +54,7 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
         setIsRunning(false);
         setResetKey(k => k + 1);
         setPredictionResult(null);
+        setChallengeStatus(null);
         setSimError(false);
         clearError();
     };
@@ -64,6 +72,23 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
         clearError();
         handleReset();
     };
+
+    const handleTelemetryUpdate = useCallback((data) => {
+        onUpdate(data);
+
+        // Challenge validation logic
+        if (challengeActive && activeExp?.challenge && data) {
+            const { target, parameter, threshold = 0.05 } = activeExp.challenge;
+            const currentVal = parseFloat(data[parameter]);
+
+            if (!isNaN(currentVal)) {
+                const diff = Math.abs(currentVal - target);
+                if (diff <= target * threshold) {
+                    setChallengeStatus('SUCCESS');
+                }
+            }
+        }
+    }, [challengeActive, activeExp, onUpdate]);
 
     if (isFailed) {
         return (
@@ -123,6 +148,18 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                 >
                     <Info size={14} /> Why? (Theory)
                 </button>
+
+                {activeExp?.challenge && (
+                    <button
+                        onClick={() => {
+                            setChallengeActive(!challengeActive);
+                            if (!challengeActive) handleReset();
+                        }}
+                        style={{...styles.topBtn, ...(challengeActive ? { background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.4)' } : {})}}
+                    >
+                        <Trophy size={14} /> {challengeActive ? 'Challenge Active' : 'Start Challenge'}
+                    </button>
+                )}
                 
                 {predictionMode && expectedValue && (
                     <div style={styles.predictionBox}>
@@ -160,6 +197,23 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                 />
             )}
 
+            {challengeActive && activeExp?.challenge && (
+                <div style={styles.challengeOverlay}>
+                    <div style={styles.challengeHeader}>
+                        <Trophy size={16} color="#fbbf24" />
+                        <span>CHALLENGE: {activeExp.challenge.title}</span>
+                    </div>
+                    <div style={styles.challengeDetails}>
+                        Target {activeExp.challenge.parameter.toUpperCase()}: <b>{activeExp.challenge.target} {activeExp.challenge.unit}</b>
+                    </div>
+                    {challengeStatus === 'SUCCESS' && (
+                        <div style={styles.challengeSuccess}>
+                            MISSION ACCOMPLISHED!
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div style={{ width: '100%', height: '100%' }}>
                 <ErrorBoundary 
                     fallback={<ErrorFallback simulationName={activeExp?.title} onRetry={handleRetry} />}
@@ -175,7 +229,7 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                             key={activeExp.id + "_" + resetKey}
                             settings={config}
                             isRunning={isRunning}
-                            onUpdate={onUpdate}
+                            onUpdate={handleTelemetryUpdate}
                             onImpact={() => {
                                 setIsRunning(false);
                                 setTimeout(() => setAssessmentOpen(true), 1500);
@@ -313,6 +367,45 @@ const styles = {
     inputGroup: { display: 'flex', flexDirection: 'column', gap: '6px' },
     label: { fontSize: '10px', color: '#3b82f6', fontWeight: '800', letterSpacing: '0.5px' },
     input: { background: 'rgba(0,0,0,0.5)', border: '1px solid #1e293b', color: 'white', padding: '10px 12px', borderRadius: '12px', width: '70px', outline: 'none', fontSize: '13px', transition: 'border-color 0.2s' },
+    challengeOverlay: {
+        position: 'absolute',
+        top: '80px',
+        right: '40px',
+        width: '280px',
+        background: 'rgba(10, 15, 25, 0.85)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(59, 130, 246, 0.2)',
+        borderRadius: '16px',
+        padding: '15px',
+        zIndex: 1000,
+        boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+    },
+    challengeHeader: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        fontSize: '11px',
+        fontWeight: '900',
+        color: '#fbbf24',
+        marginBottom: '10px',
+        letterSpacing: '1px',
+    },
+    challengeDetails: {
+        fontSize: '13px',
+        color: '#94a3b8',
+    },
+    challengeSuccess: {
+        marginTop: '15px',
+        background: 'rgba(16, 185, 129, 0.2)',
+        border: '1px solid #10b981',
+        color: '#10b981',
+        padding: '10px',
+        borderRadius: '8px',
+        textAlign: 'center',
+        fontSize: '12px',
+        fontWeight: 'bold',
+        animation: 'pulse 1.5s infinite',
+    },
     btn: { border: 'none', padding: '14px 30px', color: 'white', borderRadius: '14px', cursor: 'pointer', fontWeight: '800', fontSize: '13px', letterSpacing: '0.5px', transition: 'transform 0.2s, filter 0.2s' },
     resetBtn: { background: 'rgba(255,255,255,0.05)', border: 'none', padding: '12px', color: '#64748b', borderRadius: '14px', cursor: 'pointer', transition: 'color 0.2s, background 0.2s' },
     

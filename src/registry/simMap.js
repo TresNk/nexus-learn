@@ -46,7 +46,14 @@ export const SUBJECTS = [
                 theory: 'Projectile motion is the curved path an object follows when thrown near Earth\'s surface. Real-world application: Engineers use these calculations to design sports equipment like golf clubs and tennis rackets. It is also essential for predicting the landing of space capsules returning to Earth and for firefighting teams aiming water cannons at high-rise buildings.',
                 difficulty: 1,
                 sims: ['trajectory', 'range calc', 'angle slider'],
-                initialConfig: { velocity: 30, angle: 45, height: 10 }
+                initialConfig: { velocity: 30, angle: 45, height: 10 },
+                challenge: {
+                    title: 'Precision Strike',
+                    parameter: 'range',
+                    target: 100,
+                    unit: 'm',
+                    threshold: 0.05
+                }
             },
             {
                 id: 'DYNAMICS_NEWTON',
@@ -57,7 +64,14 @@ export const SUBJECTS = [
                 theory: 'Newton\'s Second Law states that force equals mass times acceleration. Real-world application: Automotive engineers apply this to calculate necessary braking force and design crumple zones. It also explains why heavier trucks require longer distances to stop than smaller cars, which directly influences speed limits and road safety regulations worldwide.',
                 difficulty: 1,
                 sims: ['force arrow', 'a=F/m', 'friction toggle'],
-                initialConfig: { mass: 10, force: 50 }
+                initialConfig: { mass: 10, force: 50 },
+                challenge: {
+                    title: 'Constant Acceleration',
+                    parameter: 'acceleration',
+                    target: 5,
+                    unit: 'm/s²',
+                    threshold: 0.05
+                }
             },
             {
                 id: 'PENDULUM_MOTION',
@@ -68,7 +82,14 @@ export const SUBJECTS = [
                 theory: 'A pendulum oscillates with a period determined primarily by its length and gravity. Real-world application: Beyond clocks, pendulums are used in "tuned mass dampers" inside skyscrapers like Taipei 101 to counteract swaying from high winds or earthquakes. They also help geologists measure local gravity variations to find oil or mineral deposits underground.',
                 difficulty: 1,
                 sims: ['drag release', 'timer', 'graph'],
-                initialConfig: { length: 8, angle: 45 }
+                initialConfig: { length: 8, angle: 45 },
+                challenge: {
+                    title: 'Slow Rhythm',
+                    parameter: 'period',
+                    target: 4,
+                    unit: 's',
+                    threshold: 0.02
+                }
             },
             {
                 id: 'FREE_FALL',

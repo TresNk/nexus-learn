@@ -14,6 +14,7 @@ const GenericSimulation = ({ settings, onUpdate, isRunning }) => {
     const sceneRef = useRef(null);
     const objectRef = useRef(null);
 
+    // Mesh generation and cleanup
     useEffect(() => {
         if (!canvasRef.current) return;
 
@@ -64,8 +65,9 @@ const GenericSimulation = ({ settings, onUpdate, isRunning }) => {
             window.removeEventListener("resize", resize);
             engine.dispose();
         };
-    }, []);
+    }, [settings.shape, settings.color]);
 
+    // Animation and telemetry updates
     useEffect(() => {
         const scene = sceneRef.current;
         if (!scene) return;
@@ -93,7 +95,7 @@ const GenericSimulation = ({ settings, onUpdate, isRunning }) => {
 
         scene.onBeforeRenderObservable.add(rotationStep);
         return () => scene.onBeforeRenderObservable.removeCallback(rotationStep);
-    }, [isRunning, onUpdate]);
+    }, [isRunning, onUpdate, settings.speed, settings.mass, settings.isCreator]);
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
