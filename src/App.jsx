@@ -5,6 +5,7 @@ import { getNexusResponse, generateSimulationConfig } from './services/aiService
 import { BrainCircuit, LayoutDashboard, Send, Loader2, Sparkles, PlusSquare } from 'lucide-react';
 import { useSafeRegistry } from './registry/SafeRegistry';
 import NexusCreator from './components/NexusCreator';
+import TelemetryGraph from './components/TelemetryGraph';
 
 function App() {
   const [view, setView] = useState('DASHBOARD');
@@ -80,7 +81,25 @@ function App() {
         setIsGenerating(false);
       } else {
         const response = await getNexusResponse(userText, { ...config, ...liveData, isRunning }, chatLog);
-        setChatLog(prev => [...prev, { role: 'nexus', text: response }]);
+
+        // Check for COMMAND: in response
+        if (response.includes('COMMAND:')) {
+          try {
+            const parts = response.split('COMMAND:');
+            const commandStr = parts[1].trim();
+            const command = JSON.parse(commandStr);
+
+            if (command.update) {
+              setConfig(prev => ({ ...prev, ...command.update }));
+            }
+
+            setChatLog(prev => [...prev, { role: 'nexus', text: parts[0].trim() }]);
+          } catch (e) {
+            setChatLog(prev => [...prev, { role: 'nexus', text: response }]);
+          }
+        } else {
+          setChatLog(prev => [...prev, { role: 'nexus', text: response }]);
+        }
       }
     } catch {
       setChatLog(prev => [...prev, { role: 'nexus', text: "Connection to Brain lost. Try again." }]);
@@ -237,6 +256,14 @@ function App() {
                   </div>
                 ))}
               </div>
+
+              {/* Plot the first numeric value available */}
+              {Object.entries(liveData).find(([_, v]) => !isNaN(parseFloat(v))) && (
+                <TelemetryGraph
+                  data={liveData}
+                  activeKey={Object.entries(liveData).find(([_, v]) => !isNaN(parseFloat(v)))[0]}
+                />
+              )}
             </div>
           )}
 

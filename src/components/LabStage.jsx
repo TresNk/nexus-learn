@@ -4,10 +4,12 @@ import { calculatePrediction } from '../hooks/useSimulation';
 import ErrorBoundary from './ErrorBoundary';
 import { useSafeSimulation } from '../hooks/useSafeSimulation';
 import TheoryModal from './TheoryModal';
+import AssessmentOverlay from './AssessmentOverlay';
 
 const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, resetKey, setResetKey, onBack, onUpdate, subjectColor, failedSims, onSimError }) => {
     const [eduMode, setEduMode] = useState(true);
     const [theoryOpen, setTheoryOpen] = useState(false);
+    const [assessmentOpen, setAssessmentOpen] = useState(false);
     const [predictionMode, setPredictionMode] = useState(false);
     const [userPrediction, setUserPrediction] = useState('');
     const [predictionResult, setPredictionResult] = useState(null);
@@ -151,6 +153,13 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                 content={activeExp?.theory || (activeExp?.description + ". This simulation follows standard scientific principles taught in high school curricula. Use the controls below to observe real-time data changes.")}
             />
 
+            {assessmentOpen && (
+                <AssessmentOverlay
+                    topic={activeExp?.title}
+                    onComplete={() => setAssessmentOpen(false)}
+                />
+            )}
+
             <div style={{ width: '100%', height: '100%' }}>
                 <ErrorBoundary 
                     fallback={<ErrorFallback simulationName={activeExp?.title} onRetry={handleRetry} />}
@@ -169,6 +178,7 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                             onUpdate={onUpdate}
                             onImpact={() => {
                                 setIsRunning(false);
+                                setTimeout(() => setAssessmentOpen(true), 1500);
                             }}
                             onError={handleError}
                             eduMode={eduMode}

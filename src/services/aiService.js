@@ -16,9 +16,16 @@ export const getNexusResponse = async (userInput, currentState, chatHistory) => 
 
         User: ${userInput}
 
-        Provide a concise, helpful explanation focused on the physics/science principles.
-        If the user is asking about the current simulation, reference the live data provided.
-        Keep it high-school level and encouraging.
+        Provide a concise, helpful explanation.
+
+        SPECIAL CAPABILITY:
+        If the user wants to change a parameter (e.g. "set gravity to 20", "make it faster", "double the mass"),
+        you must include a JSON command block at the end of your response like this:
+        COMMAND:{"update": {"parameterName": newValue}}
+
+        Only use parameters present in the Current Experiment Context.
+        If the user says "faster" or "slower", adjust the 'velocity' or 'speed' parameter by 50%.
+        Keep the textual part high-school level and encouraging.
         `;
 
         const result = await model.generateContent(prompt);
