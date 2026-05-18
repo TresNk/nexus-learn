@@ -45,6 +45,7 @@ export const SUBJECTS = [
                 description: 'Study 2D kinematics and parabolic flight paths.',
                 theory: 'Projectile motion is the curved path an object follows when thrown near Earth\'s surface. Real-world application: Engineers use these calculations to design sports equipment like golf clubs and tennis rackets. It is also essential for predicting the landing of space capsules returning to Earth and for firefighting teams aiming water cannons at high-rise buildings.',
                 difficulty: 1,
+                environment: 'FIELD',
                 sims: ['trajectory', 'range calc', 'angle slider'],
                 initialConfig: { velocity: 30, angle: 45, height: 10 },
                 challenge: {
@@ -187,6 +188,7 @@ export const SUBJECTS = [
                 description: 'Explore centripetal force and orbital velocity.',
                 theory: 'Objects in circular motion require a centripetal force acting toward the center. Real-world application: Satellites stay in orbit due to the balance of gravity and their velocity. Highway engineers design banked curves so cars can safely navigate turns at high speeds without skidding.',
                 difficulty: 2,
+                environment: 'SPACE',
                 sims: ['orbital path', 'force vector', 'radius slider'],
                 initialConfig: { radius: 10, velocity: 5, mass: 2 }
             },
@@ -229,6 +231,7 @@ export const SUBJECTS = [
                 description: 'Build atoms with protons, neutrons, and electrons.',
                 theory: 'Atoms are composed of a central nucleus orbited by electrons in specific energy shells. Real-world application: Semi-conductors in your smartphone rely on the movement of electrons between these energy levels. Nuclear medicine uses isotopes (atoms with extra neutrons) for life-saving cancer treatments.',
                 difficulty: 1,
+                environment: 'ATOMIC',
                 sims: ['shell filler', 'isotope calc', 'stability meter'],
                 initialConfig: { protons: 6, neutrons: 6, electrons: 6 }
             },
@@ -293,6 +296,7 @@ export const SUBJECTS = [
                 description: 'Interact with the 3D structure of genetic information.',
                 theory: 'DNA stores biological instructions in a twisted ladder shape made of base pairs. Real-world application: CRISPR gene editing allows scientists to fix mutations directly in the DNA. Forensic scientists use specific DNA patterns to solve crimes with incredible accuracy.',
                 difficulty: 1,
+                environment: 'MICROSCOPIC',
                 sims: ['base pair zoom', 'replication', 'mutation tool'],
                 initialConfig: { sequence: 'ATGC', zoom: 1 }
             },

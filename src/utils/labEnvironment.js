@@ -11,6 +11,7 @@ export const createLabEnvironment = (scene, options = {}) => {
     let groundColor, gridColor, emissiveColor;
 
     switch (preset) {
+        case 'FIELD':
         case 'OUTDOOR':
             groundColor = new BABYLON.Color3(0.1, 0.35, 0.1);
             gridColor = new BABYLON.Color3(0.2, 0.5, 0.2);
@@ -30,6 +31,12 @@ export const createLabEnvironment = (scene, options = {}) => {
             groundColor = new BABYLON.Color3(0, 0, 0);
             gridColor = new BABYLON.Color3(0.1, 0.1, 0.2);
             emissiveColor = new BABYLON.Color3(0, 0, 0);
+            break;
+        case 'ATOMIC':
+        case 'MICROSCOPIC':
+            groundColor = new BABYLON.Color3(0.05, 0.01, 0.1);
+            gridColor = new BABYLON.Color3(0.2, 0.05, 0.3);
+            emissiveColor = new BABYLON.Color3(0.02, 0, 0.05);
             break;
         case 'LAB_DARK':
         default:
@@ -104,11 +111,16 @@ export const createLabLighting = (scene, options = {}) => {
     hemiLight.intensity = intensity * 0.6;
     hemiLight.diffuse = color;
 
-    if (preset === 'OUTDOOR') {
+    if (preset === 'OUTDOOR' || preset === 'FIELD') {
         hemiLight.groundColor = new BABYLON.Color3(0.2, 0.4, 0.1);
         hemiLight.intensity = intensity * 0.8;
     } else if (preset === 'LAB_WHITE') {
         hemiLight.intensity = intensity * 0.9;
+    } else if (preset === 'SPACE') {
+        hemiLight.intensity = intensity * 0.4;
+    } else if (preset === 'ATOMIC') {
+        hemiLight.diffuse = new BABYLON.Color3(0.8, 0.5, 1);
+        hemiLight.intensity = intensity * 0.5;
     } else {
         hemiLight.groundColor = new BABYLON.Color3(0.05, 0.08, 0.12);
     }
@@ -173,6 +185,7 @@ export const createLabSkybox = (scene, options = {}) => {
     skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
     
     switch (preset) {
+        case 'FIELD':
         case 'OUTDOOR':
             skyboxMaterial.diffuseColor = new BABYLON.Color3(0.4, 0.6, 0.9);
             skyboxMaterial.emissiveColor = new BABYLON.Color3(0.1, 0.2, 0.4);
@@ -184,6 +197,10 @@ export const createLabSkybox = (scene, options = {}) => {
         case 'SPACE':
             skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
             skyboxMaterial.emissiveColor = new BABYLON.Color3(0.01, 0.01, 0.02);
+            break;
+        case 'ATOMIC':
+            skyboxMaterial.diffuseColor = new BABYLON.Color3(0.02, 0, 0.05);
+            skyboxMaterial.emissiveColor = new BABYLON.Color3(0.05, 0.01, 0.1);
             break;
         case 'LAB_DARK':
         default:

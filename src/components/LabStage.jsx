@@ -6,7 +6,7 @@ import { useSafeSimulation } from '../hooks/useSafeSimulation';
 import TheoryModal from './TheoryModal';
 import AssessmentOverlay from './AssessmentOverlay';
 
-const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, resetKey, setResetKey, onBack, onUpdate, subjectColor, failedSims, onSimError }) => {
+const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, resetKey, setResetKey, onBack, onUpdate, liveData = {}, subjectColor, failedSims, onSimError }) => {
     const [eduMode, setEduMode] = useState(true);
     const [theoryOpen, setTheoryOpen] = useState(false);
     const [assessmentOpen, setAssessmentOpen] = useState(false);
@@ -112,8 +112,65 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
         );
     }
 
+    const renderLiveFormula = () => {
+        if (!activeExp?.formula) return null;
+
+        const formula = activeExp.formula;
+        const elements = [];
+        let lastIndex = 0;
+
+        // Find all variables in liveData and their positions in formula
+        const variableMatches = [];
+        Object.keys(liveData).forEach(key => {
+            const regex = new RegExp(`\\b${key}\\b`, 'g');
+            let match;
+            while ((match = regex.exec(formula)) !== null) {
+                variableMatches.push({
+                    start: match.index,
+                    end: match.index + key.length,
+                    value: liveData[key]
+                });
+            }
+        });
+
+        // Sort matches by start position and handle overlaps
+        variableMatches.sort((a, b) => a.start - b.start);
+        const filteredMatches = [];
+        let currentEnd = 0;
+        for (const match of variableMatches) {
+            if (match.start >= currentEnd) {
+                filteredMatches.push(match);
+                currentEnd = match.end;
+            }
+        }
+
+        // Build safe elements array
+        filteredMatches.forEach((match, i) => {
+            if (match.start > lastIndex) {
+                elements.push(formula.substring(lastIndex, match.start));
+            }
+            elements.push(
+                <span key={i} style={{ color: '#10b981', textShadow: '0 0 10px #10b981' }}>
+                    {match.value}
+                </span>
+            );
+            lastIndex = match.end;
+        });
+
+        if (lastIndex < formula.length) {
+            elements.push(formula.substring(lastIndex));
+        }
+
+        return (
+            <div style={styles.formulaHUD}>
+                {elements.length > 0 ? elements : formula}
+            </div>
+        );
+    };
+
     return (
         <main style={{ flex: 1, position: 'relative', height: '100vh', width: '100%', background: '#000', overflow: 'hidden' }}>
+            <div className="viewport-overlay"></div>
             <button onClick={onBack} style={styles.backBtn}>
                 <ArrowLeft size={16} /> EXIT LAB
             </button>
@@ -196,6 +253,8 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                     onComplete={() => setAssessmentOpen(false)}
                 />
             )}
+
+            {eduMode && renderLiveFormula()}
 
             {challengeActive && activeExp?.challenge && (
                 <div style={styles.challengeOverlay}>
@@ -408,7 +467,22 @@ const styles = {
     },
     btn: { border: 'none', padding: '14px 30px', color: 'white', borderRadius: '14px', cursor: 'pointer', fontWeight: '800', fontSize: '13px', letterSpacing: '0.5px', transition: 'transform 0.2s, filter 0.2s' },
     resetBtn: { background: 'rgba(255,255,255,0.05)', border: 'none', padding: '12px', color: '#64748b', borderRadius: '14px', cursor: 'pointer', transition: 'color 0.2s, background 0.2s' },
-    
+    formulaHUD: {
+        position: 'absolute',
+        top: '40px',
+        left: '40px',
+        background: 'rgba(5, 10, 20, 0.6)',
+        backdropFilter: 'blur(10px)',
+        padding: '15px 25px',
+        borderRadius: '16px',
+        border: '1px solid rgba(59, 130, 246, 0.2)',
+        color: '#94a3b8',
+        fontFamily: 'var(--font-mono)',
+        fontSize: '18px',
+        zIndex: 1000,
+        pointerEvents: 'none',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+    },
     errorFallback: {
         width: '100%',
         height: '100%',

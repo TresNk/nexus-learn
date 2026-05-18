@@ -113,7 +113,8 @@ function App() {
       'pendulum', 'gravity', 'projectile', 'newton', 'spring', 'wave', 
       'doppler', 'circuit', 'refraction', 'magnetic', 'optics', 'thermodynamics',
       'quantum', 'relativity', 'fluid', 'collision', 'momentum', 'energy',
-      'oscillator', 'sound', 'light', 'electric', 'magnetism'
+      'oscillator', 'sound', 'light', 'electric', 'magnetism',
+      'cell', 'dna', 'mitosis', 'plate', 'tectonics', 'river', 'carbon', 'plant', 'organelle'
     ];
     
     const lowerText = text.toLowerCase();
@@ -218,6 +219,7 @@ function App() {
           subjectColor={selectedSubject.color}
           onBack={() => setView('DASHBOARD')}
           onUpdate={setLiveData}
+          liveData={liveData}
           failedSims={failedSims}
           onSimError={(expId, error) => markFailed(expId, error)}
         />
