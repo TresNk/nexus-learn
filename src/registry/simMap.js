@@ -11,7 +11,6 @@ const DopplerSim = React.lazy(() => import('../simulations/DopplerSim'));
 const CircuitSim = React.lazy(() => import('../simulations/CircuitSim'));
 const RefractionSim = React.lazy(() => import('../simulations/RefractionSim'));
 const MagneticFieldSim = React.lazy(() => import('../simulations/MagneticFieldSim'));
-const ChemistrySim = React.lazy(() => import('../simulations/ChemistrySim'));
 
 export const SUBJECTS = [
     {
