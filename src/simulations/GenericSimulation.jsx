@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as BABYLON from '@babylonjs/core';
 import { createLabEnvironment, createLabLighting, createLabCamera, enableWebXR } from '../utils/labEnvironment';
+import EduOverlay from '../components/EduOverlay';
 
-const GenericSimulation = ({ settings, isRunning, triggerReset }) => {
+const GenericSimulation = ({ settings, isRunning, triggerReset, lazyGuide, eduMode = true }) => {
     const canvasRef = useRef(null);
 
     useEffect(() => {
@@ -51,7 +52,10 @@ const GenericSimulation = ({ settings, isRunning, triggerReset }) => {
     }, [settings, isRunning, triggerReset]);
 
     return (
-        <canvas ref={canvasRef} style={{ width: '100%', height: '100%', outline: 'none' }} />
+        <div style={{ width: '100%', height: '100%', backgroundColor: '#010204', position: 'relative' }}>
+            <canvas ref={canvasRef} style={{ width: '100%', height: '100%', outline: 'none', display: 'block' }} />
+            {eduMode && lazyGuide && <EduOverlay lazyGuide={lazyGuide} />}
+        </div>
     );
 };
 

@@ -184,6 +184,7 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                             }}
                             onError={handleError}
                             eduMode={eduMode}
+                            lazyGuide={activeExp?.lazyGuide}
                         />
                     </Suspense>
                 </ErrorBoundary>

@@ -3,17 +3,35 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+
+// Security Middleware
+app.use(helmet());
+
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' ? 'https://your-production-url.com' : 'http://localhost:5174',
+    optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10kb' })); // Payload validation
+
+// Rate Limiting
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per window
+    message: "Too many requests from this IP, please try again later."
+});
+app.use('/api/', apiLimiter);
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
-        origin: "*",
+        origin: corsOptions.origin,
         methods: ["GET", "POST"]
     }
 });

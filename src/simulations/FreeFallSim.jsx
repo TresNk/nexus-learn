@@ -5,7 +5,7 @@ import { triggerExplosion, shakeCamera } from '../utils/vfx';
 import { playImpactSound } from '../utils/audio';
 import EduOverlay from '../components/EduOverlay';
 
-const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, eduMode = true }) => {
+const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, eduMode = true, lazyGuide }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const sceneRef = useRef(null);
@@ -148,7 +148,8 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
             "t": `${time.current.toFixed(2)}s`,
             "fall time": `${fallTime.toFixed(2)}s`
         },
-        annotations: annotations
+        annotations: annotations,
+        lazyGuide
     };
 
     return (

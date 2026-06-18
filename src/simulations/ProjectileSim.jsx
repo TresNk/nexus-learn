@@ -5,7 +5,7 @@ import { triggerExplosion, shakeCamera } from '../utils/vfx';
 import { playImpactSound } from '../utils/audio';
 import EduOverlay from '../components/EduOverlay';
 
-const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }) => {
+const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, lazyGuide }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const sceneRef = useRef(null);
@@ -183,7 +183,8 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }
             "g": "9.81 m/s² (gravity)",
             "t": `${time.current.toFixed(2)}s`
         },
-        annotations: annotations
+        annotations: annotations,
+        lazyGuide
     };
 
     return (

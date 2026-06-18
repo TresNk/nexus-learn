@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import * as BABYLON from '@babylonjs/core';
+import EduOverlay from '../components/EduOverlay';
 import { createLabEnvironment, createLabLighting, createLabCamera, enableWebXR } from '../utils/labEnvironment';
 
-const OrbitalSim = ({ settings, isRunning, triggerReset }) => {
+const OrbitalSim = ({ settings, isRunning, triggerReset, lazyGuide, eduMode = true }) => {
     const canvasRef = useRef(null);
 
     useEffect(() => {
@@ -18,18 +19,32 @@ const OrbitalSim = ({ settings, isRunning, triggerReset }) => {
         enableWebXR(scene);
 
         // MVP Placeholder Mesh
-        const mesh = BABYLON.MeshBuilder.CreateTorus("placeholder", { diameter: 4, thickness: 1 }, scene);
-        mesh.position.y = 3;
+        const sun = BABYLON.MeshBuilder.CreateSphere("sun", { diameter: 8 }, scene);
+        const sunMat = new BABYLON.StandardMaterial("sunMat", scene);
+        sunMat.emissiveColor = new BABYLON.Color3(1, 0.8, 0);
+        sun.material = sunMat;
 
-        const mat = new BABYLON.StandardMaterial("mat", scene);
-        mat.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
-        mesh.material = mat;
+        const planet = BABYLON.MeshBuilder.CreateSphere("planet", { diameter: 2 }, scene);
+        const planetMat = new BABYLON.StandardMaterial("planetMat", scene);
+        planetMat.diffuseColor = new BABYLON.Color3(0.2, 0.5, 1);
+        planet.material = planetMat;
+
+        // Trail
+        const trail = new BABYLON.TrailMesh("trail", planet, scene, 0.2, 60, true);
+        const trailMat = new BABYLON.StandardMaterial("trailMat", scene);
+        trailMat.emissiveColor = new BABYLON.Color3(0.2, 0.5, 1);
+        trail.material = trailMat;
+
+        let alpha = 0;
 
         engine.runRenderLoop(() => {
             scene.render();
             if (isRunning) {
-                mesh.rotation.y += (settings.speed || 1) * 0.02;
-                mesh.rotation.x += (settings.speed || 1) * 0.01;
+                alpha += 0.02 * (settings.velocity || 15) / 15;
+                const r = 15;
+                planet.position.x = r * Math.cos(alpha);
+                planet.position.z = r * Math.sin(alpha);
+                planet.rotation.y += 0.05;
             }
         });
 
@@ -42,7 +57,12 @@ const OrbitalSim = ({ settings, isRunning, triggerReset }) => {
         };
     }, [settings, isRunning, triggerReset]);
 
-    return <canvas ref={canvasRef} style={{ width: '100%', height: '100%', outline: 'none' }} />;
+    return (
+        <div style={{ width: '100%', height: '100%', backgroundColor: '#010204', position: 'relative' }}>
+            <canvas ref={canvasRef} style={{ width: '100%', height: '100%', outline: 'none', display: 'block' }} />
+            {eduMode && lazyGuide && <EduOverlay lazyGuide={lazyGuide} />}
+        </div>
+    );
 };
 
 export default OrbitalSim;

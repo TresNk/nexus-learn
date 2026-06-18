@@ -12,22 +12,8 @@ const CircuitSim = React.lazy(() => import('../simulations/CircuitSim'));
 const RefractionSim = React.lazy(() => import('../simulations/RefractionSim'));
 const MagneticFieldSim = React.lazy(() => import('../simulations/MagneticFieldSim'));
 const OrbitalSim = React.lazy(() => import('../simulations/OrbitalSim'));
-const CollisionSim = React.lazy(() => import('../simulations/CollisionSim'));
-const FluidSim = React.lazy(() => import('../simulations/FluidSim'));
-const ThermoSim = React.lazy(() => import('../simulations/ThermoSim'));
-const OpticsSim = React.lazy(() => import('../simulations/OpticsSim'));
-const EMSim = React.lazy(() => import('../simulations/EMSim'));
-const StaticsSim = React.lazy(() => import('../simulations/StaticsSim'));
-const MolecularBuilderSim = React.lazy(() => import('../simulations/MolecularBuilderSim'));
 const TitrationSim = React.lazy(() => import('../simulations/TitrationSim'));
-const GasLawSim = React.lazy(() => import('../simulations/GasLawSim'));
-const KineticsSim = React.lazy(() => import('../simulations/KineticsSim'));
-const LatticeSim = React.lazy(() => import('../simulations/LatticeSim'));
-const OsmosisSim = React.lazy(() => import('../simulations/OsmosisSim'));
-const NeuronSim = React.lazy(() => import('../simulations/NeuronSim'));
 const DNASim = React.lazy(() => import('../simulations/DNASim'));
-const EcosystemSim = React.lazy(() => import('../simulations/EcosystemSim'));
-const EpidemiologySim = React.lazy(() => import('../simulations/EpidemiologySim'));
 
 export const SUBJECTS = [
     {
@@ -147,76 +133,11 @@ export const SUBJECTS = [
                 component: OrbitalSim,
                 description: 'Explore gravity wells and Kepler’s laws in 3D.',
                 mission: 'Mission: Voyager. Calculate the correct velocity for a slingshot maneuver around Jupiter.',
+                lazyGuide: "Gravity pulls it in, speed throws it out. If they match, it orbits! If speed wins, it escapes.",
                 difficulty: 3,
                 sims: ['gravity well', 'slingshot', 'kepler laws'],
                 initialConfig: { velocity: 15, mass: 100 }
             },
-            {
-                id: 'ADV_COLLISIONS',
-                title: 'Advanced Collisions',
-                icon: Activity,
-                component: CollisionSim,
-                description: '2D elastic and inelastic collisions with vector tracking.',
-                mission: 'Mission: Particle Accelerator. Predict the resultant vectors after an inelastic collision.',
-                difficulty: 2,
-                sims: ['elasticity', 'vectors', 'momentum'],
-                initialConfig: { elasticity: 0.8, mass1: 5, mass2: 10 }
-            },
-            {
-                id: 'FLUID_DYNAMICS',
-                title: 'Fluid Dynamics',
-                icon: Waves,
-                component: FluidSim,
-                description: 'Bernoulli\'s principle with particle systems through pipes.',
-                mission: 'Mission: Hydro Dam. Adjust the pipe radius to maintain constant flow rate without bursting.',
-                difficulty: 2,
-                sims: ['bernoulli', 'particles', 'radius slider'],
-                initialConfig: { radius1: 5, radius2: 2, pressure: 100 }
-            },
-            {
-                id: 'THERMODYNAMICS',
-                title: 'Thermodynamics',
-                icon: Zap,
-                component: ThermoSim,
-                description: 'Internal combustion engine cycles and entropy.',
-                mission: 'Mission: Stirling Engine. Maximize heat transfer efficiency during the expansion phase.',
-                difficulty: 3,
-                sims: ['carnot cycle', 'entropy', 'heat transfer'],
-                initialConfig: { tempHigh: 500, tempLow: 300 }
-            },
-            {
-                id: 'OPTICS',
-                title: 'Optics & Ray Tracing',
-                icon: Focus,
-                component: OpticsSim,
-                description: 'Ray tracing through lenses, prisms, and mirrors.',
-                mission: 'Mission: Telescope. Arrange the convex and concave lenses to focus the starlight onto the sensor.',
-                difficulty: 2,
-                sims: ['lenses', 'refraction', 'focal point'],
-                initialConfig: { focalLength: 10, index: 1.5 }
-            },
-            {
-                id: 'ADV_EM',
-                title: 'Advanced Electromagnetism',
-                icon: ZapOff,
-                component: EMSim,
-                description: 'Faraday\'s Law and logic gate construction.',
-                mission: 'Mission: Power Grid. Move the magnet through the coil at the correct frequency to generate AC power.',
-                difficulty: 3,
-                sims: ['faraday', 'coils', 'logic gates'],
-                initialConfig: { turns: 50, velocity: 10 }
-            },
-            {
-                id: 'STATICS_STRUCTURES',
-                title: 'Statics & Structures',
-                icon: Anchor,
-                component: StaticsSim,
-                description: 'Truss bridge building with tension limits.',
-                mission: 'Mission: Bridge Builder. Ensure no node exceeds its compression limit when the train passes over.',
-                difficulty: 3,
-                sims: ['tension', 'compression', 'truss'],
-                initialConfig: { load: 5000, nodes: 10 }
-            }
         ]
     },
     {
@@ -227,14 +148,37 @@ export const SUBJECTS = [
         description: 'Explore atomic structures and chemical reactions.',
         experiments: [
             {
-                id: 'ATOMIC_BONDS',
-                title: 'Ionic Bonding',
+                id: 'TITRATION_LAB',
+                title: 'Titration Lab',
                 icon: FlaskConical,
-                component: ChemistrySim,
-                description: 'Understand how atoms share or trade electrons.',
+                component: TitrationSim,
+                description: 'Interactive burette with a live pH graph.',
+                mission: 'Mission: Neutralization. Drop the exact amount of acid to reach the equivalence point.',
+                lazyGuide: "Acids and bases cancel each other out. Titration is just slowly adding one until they perfectly match.",
+                difficulty: 2,
+                sims: ['burette', 'ph graph', 'indicators'],
+                initialConfig: { volume: 50, molarity: 0.1 }
+            }
+        ]
+    },
+    {
+        id: 'BIOLOGY',
+        title: 'Biology & Ecosystems',
+        icon: Microscope,
+        color: '#8b5cf6',
+        description: 'Discover the mechanisms of life from cells to populations.',
+        experiments: [
+            {
+                id: 'DNA_REPLICATION',
+                title: 'DNA Replication',
+                icon: Dna,
+                component: DNASim,
+                description: 'A 3D unwinding helix where you match base pairs.',
+                mission: 'Mission: Polymerase. Match the correct base pairs against the timer to replicate the strand.',
+                lazyGuide: "DNA is a zipper. Unzip it, and plug A to T, and C to G on both sides. Boom, two identical zippers.",
                 difficulty: 1,
-                sims: ['bond builder', 'electronegativity', '3D model'],
-                initialConfig: { atoms: 2 }
+                sims: ['helicase', 'base pairing', 'timer'],
+                initialConfig: { speed: 1, length: 20 }
             }
         ]
     }
