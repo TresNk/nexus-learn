@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as BABYLON from '@babylonjs/core';
-import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
+import { createLabEnvironment, createLabLighting, createLabCamera, enableWebXR } from '../utils/labEnvironment';
+import { triggerExplosion, shakeCamera } from '../utils/vfx';
+import { playImpactSound } from '../utils/audio';
 import EduOverlay from '../components/EduOverlay';
 
 const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, eduMode = true }) => {
@@ -24,7 +26,7 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
 
         createLabEnvironment(scene, { gridSize: 30, showGrid: true });
         createLabLighting(scene, { intensity: 0.9 });
-        createLabCamera(scene, new BABYLON.Vector3(0, 15, 25), { radius: 45 });
+        const camera = createLabCamera(scene, new BABYLON.Vector3(0, 15, 25), { radius: 45 });
 
         const rulerMat = new BABYLON.StandardMaterial("rm", scene);
         rulerMat.diffuseColor = new BABYLON.Color3(0.3, 0.3, 0.4);
@@ -41,6 +43,8 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
             labelMat.emissiveColor = new BABYLON.Color3(0.5, 0.5, 0.5);
             label.material = labelMat;
         }
+
+    enableWebXR(scene);
 
         const ball = BABYLON.MeshBuilder.CreateSphere("ball", { diameter: 1.5 }, scene);
         const ballMat = new BABYLON.StandardMaterial("bm", scene);
@@ -125,6 +129,9 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, ed
             if (position <= 0.75) {
                 ballRef.current.position.y = 0.75;
                 setAnnotations([{ t: "Done", text: `Landed! Fall time = ${time.current.toFixed(2)}s (theoretical: ${fallTime.toFixed(2)}s)` }]);
+                triggerExplosion(scene, ballRef.current.position.clone());
+                shakeCamera(camera, scene);
+                playImpactSound();
                 onImpact();
             }
         };

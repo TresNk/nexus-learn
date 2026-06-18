@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 
 dotenv.config();
 
@@ -8,7 +10,31 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
 const GOOGLE_API_KEY = process.env.GEMINI_KEY;
+
+io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
+
+    socket.on('sync_config', (data) => {
+        socket.broadcast.emit('sync_config', data);
+    });
+
+    socket.on('sync_action', (data) => {
+        socket.broadcast.emit('sync_action', data);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id);
+    });
+});
 
 app.post('/api/chat', async (req, res) => {
     try {
@@ -43,6 +69,6 @@ app.post('/api/generate', async (req, res) => {
 });
 
 const PORT = 3001;
-app.listen(PORT, () => {
-    console.log(`Backend proxy running on http://localhost:${PORT}`);
+httpServer.listen(PORT, () => {
+    console.log(`Backend proxy and Socket.IO running on http://localhost:${PORT}`);
 });

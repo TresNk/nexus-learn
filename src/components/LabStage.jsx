@@ -3,6 +3,8 @@ import { RotateCcw, ArrowLeft, BookOpen, Target, AlertTriangle } from 'lucide-re
 import { calculatePrediction, getFormula } from '../hooks/useSimulation';
 import ErrorBoundary from './ErrorBoundary';
 import { useSafeSimulation } from '../hooks/useSafeSimulation';
+import { playSuccessChime } from '../utils/audio';
+import { useMultiplayer } from '../hooks/useMultiplayer';
 
 const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, resetKey, setResetKey, onBack, onUpdate, subjectColor, failedSims, onSimError }) => {
     const [eduMode, setEduMode] = useState(true);
@@ -16,6 +18,18 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
 
     const formulaData = getFormula(activeExp?.id);
     const isFailed = failedSims?.some(f => f.id === activeExp?.id);
+
+    const handleConfigSync = useCallback((newConfig) => {
+        setConfig(newConfig);
+    }, [setConfig]);
+
+    const { broadcastConfig } = useMultiplayer('lab_room', handleConfigSync);
+
+    const handleConfigChange = (key, value) => {
+        const newConfig = { ...config, [key]: Number(value) };
+        setConfig(newConfig);
+        broadcastConfig(newConfig);
+    };
 
     useEffect(() => {
         setSimError(false);
@@ -43,6 +57,10 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
             const diff = Math.abs(expected - predicted);
             const accuracy = diff < expected * 0.1 ? 'excellent' : diff < expected * 0.25 ? 'good' : 'needs work';
             setPredictionResult({ expected, predicted, diff, accuracy });
+
+            if (accuracy === 'excellent') {
+                playSuccessChime();
+            }
         } else {
             setPredictionResult(null);
         }
@@ -178,7 +196,7 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                         <input
                             type="number"
                             value={config[key]}
-                            onChange={(e) => setConfig({ ...config, [key]: Number(e.target.value) })}
+                            onChange={(e) => handleConfigChange(key, e.target.value)}
                             style={styles.input}
                         />
                     </div>

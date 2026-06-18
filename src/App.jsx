@@ -145,27 +145,32 @@ function App() {
                       style={{...styles.expCard, ...(isFailed ? styles.expCardFailed : {})}}
                       className={isFailed ? '' : 'exp-card-glow'}
                     >
-                      <exp.icon size={20} color={isFailed ? '#64748b' : subj.color} />
-                      <span style={{ fontWeight: 'bold', color: isFailed ? '#64748b' : 'white' }}>
-                        {exp.title}
-                      </span>
-                      {exp.isGenerated && (
-                        <span style={styles.generatedBadge}>NEW</span>
-                      )}
-                      {exp.difficulty && !isFailed && (
-                        <span style={{ 
-                          marginLeft: 'auto', 
-                          fontSize: '10px', 
-                          padding: '2px 8px', 
-                          borderRadius: '10px',
-                          backgroundColor: exp.difficulty === 1 ? 'rgba(29, 158, 117, 0.2)' : exp.difficulty === 2 ? 'rgba(186, 117, 23, 0.2)' : 'rgba(226, 75, 74, 0.2)',
-                          color: exp.difficulty === 1 ? '#1D9E75' : exp.difficulty === 2 ? '#BA7517' : '#E24B4A'
-                        }}>
-                          {exp.difficulty === 1 ? 'Easy' : exp.difficulty === 2 ? 'Medium' : 'Hard'}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px', width: '100%' }}>
+                        <exp.icon size={20} color={isFailed ? '#64748b' : subj.color} />
+                        <span style={{ fontWeight: 'bold', color: isFailed ? '#64748b' : 'white' }}>
+                          {exp.title}
                         </span>
-                      )}
-                      {isFailed && (
-                        <span style={styles.failedBadge}>Error</span>
+                        {exp.isGenerated && (
+                          <span style={styles.generatedBadge}>NEW</span>
+                        )}
+                        {exp.difficulty && !isFailed && (
+                          <span style={{
+                            marginLeft: 'auto',
+                            fontSize: '10px',
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            backgroundColor: exp.difficulty === 1 ? 'rgba(29, 158, 117, 0.2)' : exp.difficulty === 2 ? 'rgba(186, 117, 23, 0.2)' : 'rgba(226, 75, 74, 0.2)',
+                            color: exp.difficulty === 1 ? '#1D9E75' : exp.difficulty === 2 ? '#BA7517' : '#E24B4A'
+                          }}>
+                            {exp.difficulty === 1 ? 'Easy' : exp.difficulty === 2 ? 'Medium' : 'Hard'}
+                          </span>
+                        )}
+                        {isFailed && (
+                          <span style={styles.failedBadge}>FAILED</span>
+                        )}
+                      </div>
+                      {exp.mission && !isFailed && (
+                        <div style={styles.missionBrief}>{exp.mission}</div>
                       )}
                     </div>
                   );
@@ -251,7 +256,8 @@ const styles = {
   dashboard: { flex: 1, padding: '60px', overflowY: 'auto' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '40px' },
   subjGroup: { background: '#0a0c12', padding: '25px', borderRadius: '20px', border: '1px solid #1e293b' },
-  expCard: { padding: '15px', background: '#020408', borderRadius: '12px', border: '1px solid #1e293b', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', marginBottom: '10px' },
+  expCard: { padding: '15px', background: '#020408', borderRadius: '12px', border: '1px solid #1e293b', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', cursor: 'pointer', marginBottom: '10px' },
+  missionBrief: { marginTop: '10px', fontSize: '11px', color: '#94a3b8', fontStyle: 'italic', borderLeft: '2px solid #3b82f6', paddingLeft: '8px' },
   expCardFailed: { opacity: 0.5, cursor: 'not-allowed', borderColor: '#ef4444' },
   generatedBadge: { fontSize: '9px', background: 'rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '2px 6px', borderRadius: '4px' },
   failedBadge: { marginLeft: 'auto', fontSize: '9px', background: 'rgba(239, 68, 68, 0.3)', color: '#ef4444', padding: '2px 6px', borderRadius: '4px' },

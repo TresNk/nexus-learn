@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as BABYLON from '@babylonjs/core';
-import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
+import { createLabEnvironment, createLabLighting, createLabCamera, enableWebXR } from '../utils/labEnvironment';
 
 const GenericSimulation = ({ settings, isRunning, triggerReset }) => {
     const canvasRef = useRef(null);
@@ -30,6 +30,8 @@ const GenericSimulation = ({ settings, isRunning, triggerReset }) => {
 
         mesh.position.y = (settings.size || 2) / 2;
         mesh.material = objectMat;
+
+        enableWebXR(scene);
 
         engine.runRenderLoop(() => {
             scene.render();

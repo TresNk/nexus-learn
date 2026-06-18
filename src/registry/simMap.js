@@ -26,6 +26,7 @@ export const SUBJECTS = [
                 icon: Target,
                 component: ProjectileSim,
                 description: 'Study 2D kinematics and parabolic flight paths.',
+                mission: 'Mission: Mars Supply Drop. You have a rover traveling at 30m/s. Calculate the launch angle to get the battery pack over the crater.',
                 difficulty: 1,
                 sims: ['trajectory', 'range calc', 'angle slider'],
                 initialConfig: { velocity: 30, angle: 45, height: 10 }
@@ -36,6 +37,7 @@ export const SUBJECTS = [
                 icon: Activity,
                 component: DynamicsSim,
                 description: 'Explore Force, Mass, and Acceleration (F=ma).',
+                mission: 'Mission: Rescue Tug. Calculate the exact force needed to tow a stranded 10kg satellite out of orbit.',
                 difficulty: 1,
                 sims: ['force arrow', 'a=F/m', 'friction toggle'],
                 initialConfig: { mass: 10, force: 50 }
@@ -46,6 +48,7 @@ export const SUBJECTS = [
                 icon: Clock,
                 component: PendulumSim,
                 description: 'Adjust length and mass; watch period change in real time.',
+                mission: 'Mission: Grandfather Clock. Adjust the pendulum length to perfectly synchronize the timing cycle.',
                 difficulty: 1,
                 sims: ['drag release', 'timer', 'graph'],
                 initialConfig: { length: 8, angle: 45 }
