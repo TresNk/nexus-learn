@@ -5,6 +5,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import { z } from 'zod';
 
 dotenv.config();
 
@@ -41,12 +42,21 @@ const GOOGLE_API_KEY = process.env.GEMINI_KEY;
 io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
 
+    socket.on('join_room', (roomId) => {
+        socket.join(roomId);
+        console.log(`Client ${socket.id} joined room: ${roomId}`);
+    });
+
     socket.on('sync_config', (data) => {
-        socket.broadcast.emit('sync_config', data);
+        if (data.roomId) {
+            socket.to(data.roomId).emit('sync_config', data.config);
+        }
     });
 
     socket.on('sync_action', (data) => {
-        socket.broadcast.emit('sync_action', data);
+        if (data.roomId) {
+            socket.to(data.roomId).emit('sync_action', data.action);
+        }
     });
 
     socket.on('disconnect', () => {
@@ -54,34 +64,58 @@ io.on('connection', (socket) => {
     });
 });
 
+const geminiPayloadSchema = z.object({
+    contents: z.array(z.object({
+        role: z.string().optional(),
+        parts: z.array(z.object({
+            text: z.string()
+        }))
+    })),
+    generationConfig: z.object({
+        temperature: z.number().optional(),
+        maxOutputTokens: z.number().optional(),
+        responseMimeType: z.string().optional()
+    }).optional()
+});
+
 app.post('/api/chat', async (req, res) => {
     try {
+        const validatedBody = geminiPayloadSchema.parse(req.body);
+
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_API_KEY}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(req.body)
+            body: JSON.stringify(validatedBody)
         });
         const data = await response.json();
         res.json(data);
     } catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({ error: "Invalid payload format", details: error.errors });
+        }
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/api/generate', async (req, res) => {
     try {
+        const validatedBody = geminiPayloadSchema.parse(req.body);
+
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_API_KEY}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(req.body)
+            body: JSON.stringify(validatedBody)
         });
         const data = await response.json();
         res.json(data);
     } catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({ error: "Invalid payload format", details: error.errors });
+        }
         res.status(500).json({ error: error.message });
     }
 });

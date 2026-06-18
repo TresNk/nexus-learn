@@ -19,16 +19,23 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
     const formulaData = getFormula(activeExp?.id);
     const isFailed = failedSims?.some(f => f.id === activeExp?.id);
 
+    const syncingRef = useRef(false);
+
     const handleConfigSync = useCallback((newConfig) => {
+        syncingRef.current = true;
         setConfig(newConfig);
+        // Reset flag safely after render cycle
+        setTimeout(() => { syncingRef.current = false; }, 50);
     }, [setConfig]);
 
-    const { broadcastConfig } = useMultiplayer('lab_room', handleConfigSync);
+    const { broadcastConfig, isConnected } = useMultiplayer('lab_room', handleConfigSync);
 
     const handleConfigChange = (key, value) => {
         const newConfig = { ...config, [key]: Number(value) };
         setConfig(newConfig);
-        broadcastConfig(newConfig);
+        if (!syncingRef.current) {
+            broadcastConfig(newConfig);
+        }
     };
 
     useEffect(() => {
@@ -128,6 +135,9 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
             )}
 
             <div style={styles.topBar}>
+                <div style={{...styles.connectionBadge, backgroundColor: isConnected ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: isConnected ? '#10b981' : '#ef4444'}}>
+                    {isConnected ? '● Multiplayer Active' : '○ Offline'}
+                </div>
                 <button 
                     onClick={() => setEduMode(!eduMode)}
                     style={{...styles.topBtn, ...(eduMode ? styles.topBtnActive : {})}}
@@ -228,6 +238,16 @@ const ErrorFallback = ({ simulationName, onRetry }) => (
 );
 
 const styles = {
+    connectionBadge: {
+        fontSize: '10px',
+        padding: '4px 10px',
+        borderRadius: '12px',
+        marginRight: '15px',
+        fontWeight: 'bold',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px'
+    },
     loader: { 
         height: '100%', 
         display: 'flex', 

@@ -1,6 +1,6 @@
 // src/services/aiService.js
 
-const BACKEND_URL = "http://localhost:3001";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
 
 export const getNexusResponse = async (userMessage, physicsData, chatHistory) => {
     const systemPrompt = `
