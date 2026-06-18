@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, Activity, Beaker, FlaskConical, Wind, Clock, ArrowDown, Link2, Waves, Zap, Plug, Eye, Magnet } from 'lucide-react';
+import { Target, Activity, Beaker, FlaskConical, Wind, Clock, ArrowDown, Link2, Waves, Zap, Plug, Eye, Magnet, Orbit, Focus, ZapOff, Anchor, TestTube, Microscope, HeartPulse, Brain, Dna, Leaf, Bug } from 'lucide-react';
 
 const ProjectileSim = React.lazy(() => import('../simulations/ProjectileSim'));
 const DynamicsSim = React.lazy(() => import('../simulations/DynamicsSim'));
@@ -11,6 +11,23 @@ const DopplerSim = React.lazy(() => import('../simulations/DopplerSim'));
 const CircuitSim = React.lazy(() => import('../simulations/CircuitSim'));
 const RefractionSim = React.lazy(() => import('../simulations/RefractionSim'));
 const MagneticFieldSim = React.lazy(() => import('../simulations/MagneticFieldSim'));
+const OrbitalSim = React.lazy(() => import('../simulations/OrbitalSim'));
+const CollisionSim = React.lazy(() => import('../simulations/CollisionSim'));
+const FluidSim = React.lazy(() => import('../simulations/FluidSim'));
+const ThermoSim = React.lazy(() => import('../simulations/ThermoSim'));
+const OpticsSim = React.lazy(() => import('../simulations/OpticsSim'));
+const EMSim = React.lazy(() => import('../simulations/EMSim'));
+const StaticsSim = React.lazy(() => import('../simulations/StaticsSim'));
+const MolecularBuilderSim = React.lazy(() => import('../simulations/MolecularBuilderSim'));
+const TitrationSim = React.lazy(() => import('../simulations/TitrationSim'));
+const GasLawSim = React.lazy(() => import('../simulations/GasLawSim'));
+const KineticsSim = React.lazy(() => import('../simulations/KineticsSim'));
+const LatticeSim = React.lazy(() => import('../simulations/LatticeSim'));
+const OsmosisSim = React.lazy(() => import('../simulations/OsmosisSim'));
+const NeuronSim = React.lazy(() => import('../simulations/NeuronSim'));
+const DNASim = React.lazy(() => import('../simulations/DNASim'));
+const EcosystemSim = React.lazy(() => import('../simulations/EcosystemSim'));
+const EpidemiologySim = React.lazy(() => import('../simulations/EpidemiologySim'));
 
 export const SUBJECTS = [
     {
@@ -122,6 +139,83 @@ export const SUBJECTS = [
                 difficulty: 2,
                 sims: ['magnet drag', 'field lines', 'compass needle'],
                 initialConfig: { separation: 10, orientation: 'N-N', fieldLines: 8, compassX: 5 }
+            },
+            {
+                id: 'ORBITAL_MECH',
+                title: 'Orbital Mechanics',
+                icon: Orbit,
+                component: OrbitalSim,
+                description: 'Explore gravity wells and Kepler’s laws in 3D.',
+                mission: 'Mission: Voyager. Calculate the correct velocity for a slingshot maneuver around Jupiter.',
+                difficulty: 3,
+                sims: ['gravity well', 'slingshot', 'kepler laws'],
+                initialConfig: { velocity: 15, mass: 100 }
+            },
+            {
+                id: 'ADV_COLLISIONS',
+                title: 'Advanced Collisions',
+                icon: Activity,
+                component: CollisionSim,
+                description: '2D elastic and inelastic collisions with vector tracking.',
+                mission: 'Mission: Particle Accelerator. Predict the resultant vectors after an inelastic collision.',
+                difficulty: 2,
+                sims: ['elasticity', 'vectors', 'momentum'],
+                initialConfig: { elasticity: 0.8, mass1: 5, mass2: 10 }
+            },
+            {
+                id: 'FLUID_DYNAMICS',
+                title: 'Fluid Dynamics',
+                icon: Waves,
+                component: FluidSim,
+                description: 'Bernoulli\'s principle with particle systems through pipes.',
+                mission: 'Mission: Hydro Dam. Adjust the pipe radius to maintain constant flow rate without bursting.',
+                difficulty: 2,
+                sims: ['bernoulli', 'particles', 'radius slider'],
+                initialConfig: { radius1: 5, radius2: 2, pressure: 100 }
+            },
+            {
+                id: 'THERMODYNAMICS',
+                title: 'Thermodynamics',
+                icon: Zap,
+                component: ThermoSim,
+                description: 'Internal combustion engine cycles and entropy.',
+                mission: 'Mission: Stirling Engine. Maximize heat transfer efficiency during the expansion phase.',
+                difficulty: 3,
+                sims: ['carnot cycle', 'entropy', 'heat transfer'],
+                initialConfig: { tempHigh: 500, tempLow: 300 }
+            },
+            {
+                id: 'OPTICS',
+                title: 'Optics & Ray Tracing',
+                icon: Focus,
+                component: OpticsSim,
+                description: 'Ray tracing through lenses, prisms, and mirrors.',
+                mission: 'Mission: Telescope. Arrange the convex and concave lenses to focus the starlight onto the sensor.',
+                difficulty: 2,
+                sims: ['lenses', 'refraction', 'focal point'],
+                initialConfig: { focalLength: 10, index: 1.5 }
+            },
+            {
+                id: 'ADV_EM',
+                title: 'Advanced Electromagnetism',
+                icon: ZapOff,
+                component: EMSim,
+                description: 'Faraday\'s Law and logic gate construction.',
+                mission: 'Mission: Power Grid. Move the magnet through the coil at the correct frequency to generate AC power.',
+                difficulty: 3,
+                sims: ['faraday', 'coils', 'logic gates'],
+                initialConfig: { turns: 50, velocity: 10 }
+            },
+            {
+                id: 'STATICS_STRUCTURES',
+                title: 'Statics & Structures',
+                icon: Anchor,
+                component: StaticsSim,
+                description: 'Truss bridge building with tension limits.',
+                mission: 'Mission: Bridge Builder. Ensure no node exceeds its compression limit when the train passes over.',
+                difficulty: 3,
+                sims: ['tension', 'compression', 'truss'],
+                initialConfig: { load: 5000, nodes: 10 }
             }
         ]
     },

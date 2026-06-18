@@ -76,6 +76,23 @@ export const calculatePrediction = (expId, config) => {
             const strength = (1 / (Math.abs(cx + sep / 2) + 1)).toFixed(3);
             return { type: 'field', value: strength, unit: 'T', label: 'Field Strength' };
         }
+        case 'ORBITAL_MECH': return { type: 'velocity', value: (config.velocity * 1.5).toFixed(1), unit: 'km/s', label: 'Escape Velocity' };
+        case 'ADV_COLLISIONS': return { type: 'momentum', value: (config.mass1 * config.elasticity).toFixed(1), unit: 'kg m/s', label: 'Final Momentum' };
+        case 'FLUID_DYNAMICS': return { type: 'velocity', value: (config.pressure / (config.radius2 || 1)).toFixed(1), unit: 'm/s', label: 'Exit Velocity' };
+        case 'THERMODYNAMICS': return { type: 'efficiency', value: (1 - config.tempLow / config.tempHigh).toFixed(2), unit: '', label: 'Carnot Efficiency' };
+        case 'OPTICS': return { type: 'focal', value: (config.focalLength * config.index).toFixed(1), unit: 'cm', label: 'Effective Focal' };
+        case 'ADV_EM': return { type: 'voltage', value: (config.turns * config.velocity * 0.1).toFixed(1), unit: 'V', label: 'Induced EMF' };
+        case 'STATICS_STRUCTURES': return { type: 'tension', value: (config.load / config.nodes).toFixed(1), unit: 'N', label: 'Max Tension' };
+        case 'MOLECULAR_BUILDER': return { type: 'angle', value: (180 - config.ligands * 10).toFixed(1), unit: '°', label: 'Bond Angle' };
+        case 'TITRATION_LAB': return { type: 'ph', value: (7 + config.volume * 0.05).toFixed(1), unit: '', label: 'Final pH' };
+        case 'IDEAL_GAS': return { type: 'pressure', value: (8.314 * config.temp / config.volume).toFixed(1), unit: 'atm', label: 'Pressure' };
+        case 'KINETICS': return { type: 'rate', value: Math.exp(-config.activation / (8.314 * config.temp)).toFixed(4), unit: 's⁻¹', label: 'Rate Constant k' };
+        case 'LATTICE': return { type: 'density', value: (config.size * 2).toFixed(1), unit: 'g/cm³', label: 'Density' };
+        case 'OSMOSIS': return { type: 'gradient', value: Math.abs(config.soluteInside - config.soluteOutside).toFixed(2), unit: 'M', label: 'Concentration Gradient' };
+        case 'NEURON': return { type: 'potential', value: (config.stimulus > Math.abs(config.threshold) ? 40 : -70).toFixed(1), unit: 'mV', label: 'Action Potential' };
+        case 'DNA_REPLICATION': return { type: 'time', value: (config.length / config.speed).toFixed(1), unit: 's', label: 'Replication Time' };
+        case 'ECOSYSTEM': return { type: 'population', value: (config.deer - config.wolves * 2).toFixed(0), unit: 'ind', label: 'Equilibrium Prey' };
+        case 'EPIDEMIOLOGY': return { type: 'peak', value: (config.population * (1 - 1/config.r0)).toFixed(0), unit: 'cases', label: 'Peak Infected' };
         default:
             return null;
     }
@@ -93,6 +110,23 @@ export const getFormula = (expId) => {
         'SIMPLE_CIRCUITS': { formula: 'V = IR', variables: ['V (voltage)', 'I (current)', 'R (resistance)'] },
         'REFRACTION_SNELL': { formula: 'n₁sin(θ₁) = n₂sin(θ₂)', variables: ['n (refractive index)', 'θ (angle)'] },
         'MAGNETIC_FIELD': { formula: 'B = μ₀I / 2πr', variables: ['r (distance)', 'I (current)'] },
+        'ORBITAL_MECH': { formula: 'v = √(GM/r)', variables: ['v (velocity)', 'M (mass)'] },
+        'ADV_COLLISIONS': { formula: 'm₁v₁ + m₂v₂ = m₁v₁\' + m₂v₂\'', variables: ['m (mass)', 'v (velocity)'] },
+        'FLUID_DYNAMICS': { formula: 'A₁v₁ = A₂v₂', variables: ['A (area)', 'v (velocity)'] },
+        'THERMODYNAMICS': { formula: 'η = 1 - Tc/Th', variables: ['η (efficiency)', 'T (temp)'] },
+        'OPTICS': { formula: '1/f = 1/dₒ + 1/dᵢ', variables: ['f (focal length)', 'd (distance)'] },
+        'ADV_EM': { formula: 'ε = -N(dΦ/dt)', variables: ['ε (EMF)', 'N (turns)'] },
+        'STATICS_STRUCTURES': { formula: 'ΣF = 0', variables: ['F (force)'] },
+        'MOLECULAR_BUILDER': { formula: 'AXmEn', variables: ['X (ligands)', 'E (lone pairs)'] },
+        'TITRATION_LAB': { formula: 'M₁V₁ = M₂V₂', variables: ['M (molarity)', 'V (volume)'] },
+        'IDEAL_GAS': { formula: 'PV = nRT', variables: ['P (pressure)', 'V (volume)', 'T (temp)'] },
+        'KINETICS': { formula: 'k = Ae^(-Ea/RT)', variables: ['k (rate)', 'Ea (activation)'] },
+        'LATTICE': { formula: 'ρ = nA / VcNA', variables: ['ρ (density)', 'A (atomic weight)'] },
+        'OSMOSIS': { formula: 'π = iMRT', variables: ['π (osmotic pressure)', 'M (molarity)'] },
+        'NEURON': { formula: 'V = I·R', variables: ['V (voltage)', 'I (current)'] },
+        'DNA_REPLICATION': { formula: 't = L/v', variables: ['L (length)', 'v (speed)'] },
+        'ECOSYSTEM': { formula: 'dP/dt = rP(1 - P/K)', variables: ['P (population)', 'K (capacity)'] },
+        'EPIDEMIOLOGY': { formula: 'S + I + R = N', variables: ['S (susceptible)', 'I (infected)'] }
     };
     return formulas[expId] || null;
 };
