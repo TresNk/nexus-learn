@@ -1,45 +1,61 @@
-import React, { useEffect, useRef, useState } from 'react';
+/**
+ * GenericSimulation Engine
+ *
+ * A schema-driven 3D engine built on Babylon.js. It interprets configuration objects
+ * (from AI or Nexus Creator) to dynamically generate scientific visualizations.
+ */
+import React, { useEffect, useRef } from 'react';
 import * as BABYLON from '@babylonjs/core';
-import { createLabEnvironment, createLabLighting, createLabCamera, enableWebXR } from '../utils/labEnvironment';
-import EduOverlay from '../components/EduOverlay';
+import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
 
-const GenericSimulation = ({ settings, isRunning, triggerReset, lazyGuide, eduMode = true }) => {
+const GenericSimulation = ({ settings, onUpdate, isRunning }) => {
     const canvasRef = useRef(null);
+    const engineRef = useRef(null);
+    const sceneRef = useRef(null);
+    const objectRef = useRef(null);
 
+    // Mesh generation and cleanup
     useEffect(() => {
         if (!canvasRef.current) return;
 
-        const engine = new BABYLON.Engine(canvasRef.current, true, { preserveDrawingBuffer: true, stencil: true });
+        const engine = new BABYLON.Engine(canvasRef.current, true);
         const scene = new BABYLON.Scene(engine);
         scene.clearColor = new BABYLON.Color4(0.01, 0.02, 0.04, 1);
 
-        createLabEnvironment(scene, { gridSize: 30, showGrid: true });
-        createLabLighting(scene, { intensity: 0.9 });
-        createLabCamera(scene, new BABYLON.Vector3(0, 5, 0), { radius: 20 });
+        createLabEnvironment(scene);
+        createLabLighting(scene);
+        createLabCamera(scene, new BABYLON.Vector3(0, 2, 0), { radius: 15 });
 
-        const objectMat = new BABYLON.StandardMaterial("objMat", scene);
-        objectMat.diffuseColor = settings.color
-            ? BABYLON.Color3.FromHexString(settings.color)
-            : new BABYLON.Color3(0.2, 0.5, 1);
-
+        /*
+           Schema-driven mesh generation.
+           Interprets 'shape' parameter to create the primary actor.
+        */
+        const meshType = settings.shape || 'box';
         let mesh;
-        if (settings.shape === 'box') {
-            mesh = BABYLON.MeshBuilder.CreateBox("obj", { size: settings.size || 2 }, scene);
+        if (meshType === 'sphere') {
+            mesh = BABYLON.MeshBuilder.CreateSphere("obj", { diameter: 2 }, scene);
+        } else if (meshType === 'cylinder') {
+            mesh = BABYLON.MeshBuilder.CreateCylinder("obj", { diameter: 2, height: 3 }, scene);
         } else {
-            mesh = BABYLON.MeshBuilder.CreateSphere("obj", { diameter: settings.size || 2 }, scene);
+            mesh = BABYLON.MeshBuilder.CreateBox("obj", { size: 2 }, scene);
         }
 
-        mesh.position.y = (settings.size || 2) / 2;
-        mesh.material = objectMat;
+        mesh.position.y = 2;
+        const mat = new BABYLON.StandardMaterial("objMat", scene);
 
-        enableWebXR(scene);
+        // Dynamic color from settings or default
+        const colorHex = settings.color || "#3b82f6";
+        mat.diffuseColor = BABYLON.Color3.FromHexString(colorHex);
+        mat.emissiveColor = mat.diffuseColor.scale(0.2);
+
+        mesh.material = mat;
+        objectRef.current = mesh;
+
+        engineRef.current = engine;
+        sceneRef.current = scene;
 
         engine.runRenderLoop(() => {
-            scene.render();
-            if (isRunning) {
-                // simple rotation as dynamic feedback
-                mesh.rotation.y += (settings.speed || 1) * 0.01;
-            }
+            if (scene) scene.render();
         });
 
         const resize = () => engine.resize();
@@ -49,12 +65,72 @@ const GenericSimulation = ({ settings, isRunning, triggerReset, lazyGuide, eduMo
             window.removeEventListener("resize", resize);
             engine.dispose();
         };
-    }, [settings, isRunning, triggerReset]);
+    }, [settings.shape, settings.color]);
+
+    // Animation and telemetry updates
+    useEffect(() => {
+        const scene = sceneRef.current;
+        if (!scene) return;
+
+        const rotationStep = () => {
+            if (isRunning && objectRef.current) {
+                const speed = (Number(settings.speed) || 1) * 0.02;
+                objectRef.current.rotation.y += speed;
+
+                // Scale based on mass if provided
+                if (settings.mass) {
+                    const s = Math.max(0.5, Math.min(3, Number(settings.mass) / 5));
+                    objectRef.current.scaling.setAll(s);
+                }
+
+                // Mock telemetry
+                onUpdate({
+                    status: settings.isCreator ? "Creator Mode" : "AI Generated",
+                    velocity: (speed * 100).toFixed(1) + " units/s",
+                    scale: objectRef.current.scaling.x.toFixed(2),
+                    active: isRunning ? "YES" : "NO"
+                });
+            }
+        };
+
+        scene.onBeforeRenderObservable.add(rotationStep);
+        return () => scene.onBeforeRenderObservable.removeCallback(rotationStep);
+    }, [isRunning, onUpdate, settings.speed, settings.mass, settings.isCreator]);
 
     return (
-        <div style={{ width: '100%', height: '100%', backgroundColor: '#010204', position: 'relative' }}>
-            <canvas ref={canvasRef} style={{ width: '100%', height: '100%', outline: 'none', display: 'block' }} />
-            {eduMode && lazyGuide && <EduOverlay lazyGuide={lazyGuide} />}
+        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+            <canvas ref={canvasRef} style={{ width: '100%', height: '100%', outline: 'none' }} />
+            <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                textAlign: 'center',
+                pointerEvents: 'none',
+                background: 'rgba(0,0,0,0.6)',
+                padding: '20px',
+                borderRadius: '15px',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                backdropFilter: 'blur(5px)'
+            }}>
+                <h2 style={{ color: '#3b82f6', marginBottom: '10px' }}>AI-Generated Lab</h2>
+                <p style={{ color: '#94a3b8', fontSize: '14px' }}>
+                    This simulation was dynamically generated by Nexus Brain.<br/>
+                    A specialized 3D environment is being calibrated.
+                </p>
+                <div style={{ marginTop: '15px', fontSize: '12px', color: '#64748b', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    {Object.keys(settings).length > 0 ? (
+                        Object.entries(settings).map(([key, value]) => (
+                            <div key={key} style={{ display: 'flex', justifyContent: 'space-between', gap: '20px' }}>
+                                <span style={{ color: '#3b82f6' }}>{key.toUpperCase()}</span>
+                                <span style={{ color: '#10b981', fontWeight: 'bold' }}>{value}</span>
+                            </div>
+                        ))
+                    ) : (
+                        <div>No parameters defined</div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

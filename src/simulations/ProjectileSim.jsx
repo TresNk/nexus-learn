@@ -5,7 +5,7 @@ import { triggerExplosion, shakeCamera } from '../utils/vfx';
 import { playImpactSound } from '../utils/audio';
 import EduOverlay from '../components/EduOverlay';
 
-const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, lazyGuide }) => {
+const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, eduMode = true }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const sceneRef = useRef(null);
@@ -17,28 +17,28 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, 
     const pointsRef = useRef([]);
     const time = useRef(0);
     const [annotations, setAnnotations] = useState([]);
-    const [showEdu, setShowEdu] = useState(true);
+    const [livePhysicsData, setLivePhysicsData] = useState(null);
 
-    const h0 = Number(settings.height);
+    const h0_val = Number(settings.height);
     const angleRad = (Number(settings.angle) * Math.PI) / 180;
     const v0 = Number(settings.velocity);
     const vx = v0 * Math.cos(angleRad);
     const vy_init = v0 * Math.sin(angleRad);
-    const maxTime = (vy_init + Math.sqrt(vy_init * vy_init + 2 * 9.8 * (h0 + 2.5))) / 9.8;
-    const maxRange = muzzleX => vx * maxTime;
     const muzzleX = 3 * Math.cos(angleRad);
-    const muzzleY = h0 + 2.5 + 3 * Math.sin(angleRad);
+    const muzzleY = h0_val + 2.5 + 3 * Math.sin(angleRad);
+    const maxTime = (vy_init + Math.sqrt(vy_init * vy_init + 2 * 9.8 * (h0_val + 2.5))) / 9.8;
 
     useEffect(() => {
         if (!canvasRef.current) return;
 
         const engine = new BABYLON.Engine(canvasRef.current, true, { preserveDrawingBuffer: true, stencil: true });
         const scene = new BABYLON.Scene(engine);
-        scene.clearColor = new BABYLON.Color4(0.01, 0.02, 0.04, 1);
+        scene.clearColor = new BABYLON.Color4(0.4, 0.6, 0.9, 1);
 
-        createLabEnvironment(scene, { gridSize: 50, showGrid: true, showAxis: false });
-        createLabLighting(scene, { intensity: 0.9 });
-        const camera = createLabCamera(scene, new BABYLON.Vector3(25, 12, 0), { radius: 60 });
+        const envPreset = 'OUTDOOR';
+        createLabEnvironment(scene, { preset: envPreset, gridSize: 100, showGrid: true });
+        createLabLighting(scene, { preset: envPreset, intensity: 1.0 });
+        createLabCamera(scene, new BABYLON.Vector3(25, 12, 0), { radius: 60 });
 
         engineRef.current = engine;
         sceneRef.current = scene;
@@ -47,7 +47,6 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, 
 
         const resize = () => engine.resize();
         window.addEventListener("resize", resize);
-        setTimeout(resize, 100);
 
         return () => {
             window.removeEventListener("resize", resize);
@@ -65,38 +64,50 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, 
         if (trailRef.current) { trailRef.current.dispose(); trailRef.current = null; }
         if (velocityArrowRef.current) { velocityArrowRef.current.dispose(); velocityArrowRef.current = null; }
 
-        const h0 = Number(settings.height);
-
-        const tower = BABYLON.MeshBuilder.CreateBox("tower", { width: 4, height: h0, depth: 4 }, scene);
-        tower.position.y = h0 / 2;
+        const tower = BABYLON.MeshBuilder.CreateBox("tower", { width: 4, height: h0_val, depth: 4 }, scene);
+        tower.position.y = h0_val / 2;
         const tMat = new BABYLON.StandardMaterial("tm", scene);
         tMat.diffuseColor = new BABYLON.Color3(0.15, 0.18, 0.25);
-        tMat.emissiveColor = new BABYLON.Color3(0.05, 0.06, 0.08);
         tower.material = tMat;
         towerRef.current = tower;
 
         const barrel = BABYLON.MeshBuilder.CreateCylinder("barrel", { diameter: 2.2, height: 6 }, scene);
         barrel.rotation.z = angleRad - Math.PI / 2;
-        barrel.position.y = h0 + 2.5;
+        barrel.position.y = h0_val + 2.5;
         const bMat = new BABYLON.StandardMaterial("bm", scene);
         bMat.diffuseColor = new BABYLON.Color3(0.2, 0.4, 1.0);
-        bMat.emissiveColor = new BABYLON.Color3(0.05, 0.1, 0.25);
         barrel.material = bMat;
         barrelRef.current = barrel;
 
         const ball = BABYLON.MeshBuilder.CreateSphere("ball", { diameter: 1.5 }, scene);
         const sMat = new BABYLON.StandardMaterial("sm", scene);
         sMat.diffuseColor = new BABYLON.Color3(1, 0.4, 0);
-        sMat.emissiveColor = new BABYLON.Color3(0.8, 0.3, 0);
         ball.material = sMat;
         ballRef.current = ball;
-
         ball.position = new BABYLON.Vector3(muzzleX, muzzleY, 0);
 
         time.current = 0;
         pointsRef.current = [];
-        setAnnotations([]);
-    }, [settings.height, settings.angle, triggerReset]);
+
+        onUpdate({
+            x: muzzleX.toFixed(1),
+            y: muzzleY.toFixed(1),
+            vx: vx.toFixed(1),
+            vy: vy_init.toFixed(1),
+            t: "0.0"
+        });
+    }, [h0_val, angleRad, muzzleX, muzzleY, vx, vy_init, onUpdate]);
+
+    const getAnnotation = React.useCallback((t, x, y, curVx, curVy, initialH) => {
+        const annList = [
+            { threshold: 0.5, text: `Initial velocity: ${curVx.toFixed(1)} m/s horizontal, ${vy_init.toFixed(1)} m/s vertical` },
+            { threshold: 1.5, text: `Gravity reducing vertical speed: vy = ${curVy.toFixed(1)} m/s` },
+            { threshold: 2.5, text: `Ball at peak height: ${y.toFixed(1)}m. Vertical velocity = 0` },
+            { threshold: 4.5, text: `Approaching ground: total speed = ${Math.sqrt(curVx*curVx + curVy*curVy).toFixed(1)} m/s (from ${initialH}m)` },
+        ];
+        const match = annList.find(a => t >= a.threshold) || { text: `Position: (${x.toFixed(1)}, ${y.toFixed(1)})m` };
+        return { t: `t=${t.toFixed(1)}s`, text: match.text };
+    }, [vy_init]);
 
     useEffect(() => {
         const scene = sceneRef.current;
@@ -115,6 +126,14 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, 
                 ballRef.current.position.x = posX;
                 ballRef.current.position.y = Math.max(0, posY);
 
+                setLivePhysicsData({
+                    x: posX,
+                    y: posY,
+                    vx: vx,
+                    vy: currentVy,
+                    t: time.current
+                });
+
                 pointsRef.current.push(ballRef.current.position.clone());
                 if (pointsRef.current.length > 2) {
                     if (trailRef.current) trailRef.current.dispose();
@@ -131,28 +150,22 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, 
                 }, scene);
                 velocityArrowRef.current.color = new BABYLON.Color3(0.2, 1, 0.4);
 
-                const telemetry = {
+                onUpdate({
                     x: posX.toFixed(1),
                     y: posY.toFixed(1),
                     vx: vx.toFixed(1),
                     vy: currentVy.toFixed(1),
                     t: time.current.toFixed(1)
-                };
-                onUpdate(telemetry);
+                });
 
                 if (time.current - lastAnnotationTime > 0.5 && time.current < maxTime) {
                     lastAnnotationTime = time.current;
-                    const annotation = getAnnotation(time.current, posX, posY, vx, currentVy, h0);
+                    const annotation = getAnnotation(time.current, posX, posY, vx, currentVy, h0_val);
                     setAnnotations(prev => [...prev.slice(-2), annotation]);
                 }
 
                 if (ballRef.current.position.y <= 0) {
                     ballRef.current.position.y = 0;
-                    const finalAnn = { t: `t=${time.current.toFixed(1)}s`, text: `Landed at x=${posX.toFixed(1)}m (predicted: ${(v0 * v0 * Math.sin(2 * angleRad) / 9.8).toFixed(1)}m)` };
-                    setAnnotations(prev => [...prev.slice(-2), finalAnn]);
-                    triggerExplosion(scene, ballRef.current.position.clone());
-                    shakeCamera(camera, scene);
-                    playImpactSound();
                     onImpact();
                 }
             }
@@ -160,28 +173,18 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, 
 
         scene.onBeforeRenderObservable.add(physicsStep);
         return () => scene.onBeforeRenderObservable.removeCallback(physicsStep);
-    }, [isRunning]);
+    }, [isRunning, muzzleX, muzzleY, vx, vy_init, onUpdate, maxTime, getAnnotation, h0_val, onImpact]);
 
-    const getAnnotation = (t, x, y, vx, vy, h0) => {
-        const annotations = [
-            { threshold: 0.5, text: `Initial velocity: ${vx.toFixed(1)} m/s horizontal, ${vy_init.toFixed(1)} m/s vertical` },
-            { threshold: 1.5, text: `Gravity reducing vertical speed: vy = ${vy.toFixed(1)} m/s` },
-            { threshold: 2.5, text: `Ball at peak height: ${y.toFixed(1)}m. Vertical velocity = 0` },
-            { threshold: 3.5, text: `Falling now: vertical speed increasing in negative direction` },
-            { threshold: 4.5, text: `Approaching ground: total speed = ${Math.sqrt(vx*vx + vy*vy).toFixed(1)} m/s` },
-        ];
-        const match = annotations.find(a => t >= a.threshold) || { text: `Position: (${x.toFixed(1)}, ${y.toFixed(1)})m` };
-        return { t: `t=${t.toFixed(1)}s`, text: match.text };
-    };
+    const displayTime = isRunning && livePhysicsData ? livePhysicsData.t : 0;
 
     const eduData = {
         formula: "y = h₀ + v₀sin(θ)t - ½gt²",
         variables: {
-            "h₀": `${h0}m (initial height)`,
-            "v₀": `${v0} m/s (initial speed)`,
-            "θ": `${settings.angle}° (launch angle)`,
-            "g": "9.81 m/s² (gravity)",
-            "t": `${time.current.toFixed(2)}s`
+            "h₀": `${h0_val}m`,
+            "v₀": `${v0} m/s`,
+            "θ": `${settings.angle}°`,
+            "g": "9.81 m/s²",
+            "t": `${displayTime.toFixed(2)}s`
         },
         annotations: annotations,
         lazyGuide
@@ -190,18 +193,7 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, 
     return (
         <div style={{ width: '100%', height: '100%', backgroundColor: '#010204', position: 'relative' }}>
             <canvas ref={canvasRef} style={{ width: '100%', height: '100%', outline: 'none', display: 'block' }} />
-            <button 
-                onClick={() => setShowEdu(!showEdu)}
-                style={{
-                    position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)',
-                    background: 'rgba(59, 130, 246, 0.2)', border: '1px solid rgba(59, 130, 246, 0.5)',
-                    color: '#3b82f6', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer',
-                    fontSize: '12px', zIndex: 200
-                }}
-            >
-                {showEdu ? '📊 Hide Education' : '📊 Show Education'}
-            </button>
-            {showEdu && <EduOverlay {...eduData} />}
+            {eduMode && <EduOverlay {...eduData} />}
         </div>
     );
 };

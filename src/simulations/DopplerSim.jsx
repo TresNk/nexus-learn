@@ -3,7 +3,7 @@ import * as BABYLON from '@babylonjs/core';
 import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
 import EduOverlay from '../components/EduOverlay';
 
-const DopplerSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true }) => {
+const DopplerSim = ({ settings, onUpdate, isRunning }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const sceneRef = useRef(null);
@@ -11,10 +11,10 @@ const DopplerSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tru
     const wavesRef = useRef([]);
     const time = useRef(0);
     const [annotations, setAnnotations] = useState([]);
+    const [livePhysicsData, setLivePhysicsData] = useState(null);
 
     const speed = Number(settings.speed) || 10;
     const frequency = Number(settings.frequency) || 2;
-    const wavelength = speed / frequency;
     const speedOfSound = 343;
     const dopplerShift = Math.abs(frequency * speedOfSound / (speedOfSound - speed) - frequency);
 
@@ -61,7 +61,6 @@ const DopplerSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tru
         engine.runRenderLoop(() => scene.render());
         const resize = () => engine.resize();
         window.addEventListener("resize", resize);
-        setTimeout(resize, 100);
 
         return () => {
             window.removeEventListener("resize", resize);
@@ -74,17 +73,15 @@ const DopplerSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tru
 
         sourceRef.current.position.x = -15;
         time.current = 0;
-        setAnnotations([]);
         wavesRef.current.forEach(w => w.dispose());
         wavesRef.current = [];
 
         onUpdate({
             speed: speed + " m/s",
             frequency: frequency + " Hz",
-            wavelength: wavelength.toFixed(1) + " m",
             "doppler shift": dopplerShift.toFixed(2) + " Hz"
         });
-    }, [settings.speed, settings.frequency, triggerReset, speed, frequency, wavelength, dopplerShift]);
+    }, [speed, frequency, dopplerShift, onUpdate]);
 
     useEffect(() => {
         const scene = sceneRef.current;
@@ -94,9 +91,6 @@ const DopplerSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tru
         let direction = 1;
         let lastAnnTime = 0;
         const maxX = 15, minX = -15;
-
-        wavesRef.current.forEach(w => w.dispose());
-        wavesRef.current = [];
 
         const updateLoop = () => {
             if (!isRunning) return;
@@ -109,12 +103,12 @@ const DopplerSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tru
             }
             sourceRef.current.position.x = sourceX;
 
-            if (time.current > 0.3) {
-                time.current = 0;
-                const waveMat = new BABYLON.StandardMaterial("wm" + Date.now(), scene);
+            // Wave Emission logic
+            if (time.current % 0.3 < 0.016) {
+                const waveMat = new BABYLON.StandardMaterial("wm", scene);
                 waveMat.emissiveColor = new BABYLON.Color3(1, 0.4, 0.2);
                 waveMat.alpha = 0.5;
-                const wave = BABYLON.MeshBuilder.CreateTorus("wave", { diameter: 2, thickness: 0.15, tessellation: 32 }, scene);
+                const wave = BABYLON.MeshBuilder.CreateTorus("wave", { diameter: 2, thickness: 0.1, tessellation: 32 }, scene);
                 wave.position = sourceRef.current.position.clone();
                 wave.position.y = 0.5;
                 wave.rotation.x = Math.PI / 2;
@@ -125,9 +119,9 @@ const DopplerSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tru
 
             wavesRef.current = wavesRef.current.filter(w => {
                 const age = (Date.now() - w.birth) / 1000;
-                const newDiameter = 2 + age * 15;
-                w.scaling = new BABYLON.Vector3(newDiameter / 2, newDiameter / 2, 1);
-                w.material.alpha = Math.max(0, 0.5 - age * 0.04);
+                const newSize = 1 + age * 20;
+                w.scaling = new BABYLON.Vector3(newSize, newSize, 1);
+                w.material.alpha = Math.max(0, 0.5 - age * 0.2);
                 if (w.material.alpha <= 0) { w.dispose(); return false; }
                 return true;
             });
@@ -135,34 +129,37 @@ const DopplerSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tru
             const approaching = sourceX < 15 && direction > 0;
             const apparentFreq = approaching ? frequency * (speedOfSound / (speedOfSound - speed)) : frequency * (speedOfSound / (speedOfSound + speed));
 
+            setLivePhysicsData({ freq: apparentFreq, pos: sourceX, status: approaching ? "Approaching" : "Receding" });
+
             onUpdate({
                 speed: speed + " m/s",
                 frequency: frequency + " Hz",
-                position: sourceX.toFixed(1) + " m",
                 "apparent freq": Math.abs(apparentFreq).toFixed(1) + " Hz",
                 state: approaching ? "Approaching" : "Receding"
             });
 
-            if (time.current - lastAnnTime > 0.4) {
+            if (time.current - lastAnnTime > 0.5) {
                 lastAnnTime = time.current;
                 const approachingText = approaching 
-                    ? `Moving toward observer! Waves compress → higher frequency: ${apparentFreq.toFixed(1)} Hz`
-                    : `Moving away! Waves stretch → lower frequency: ${apparentFreq.toFixed(1)} Hz`;
-                setAnnotations([{ t: "t=" + time.current.toFixed(1) + "s", text: approachingText }]);
+                    ? `Waves compress → higher pitch`
+                    : `Waves stretch → lower pitch`;
+                setAnnotations(prev => [...prev.slice(-1), { t: "t=" + time.current.toFixed(1) + "s", text: approachingText }]);
             }
         };
 
         scene.onBeforeRenderObservable.add(updateLoop);
         return () => scene.onBeforeRenderObservable.removeCallback(updateLoop);
-    }, [isRunning, speed, frequency]);
+    }, [isRunning, speed, frequency, speedOfSound, onUpdate]);
+
+    const displayFreq = livePhysicsData ? livePhysicsData.freq : frequency;
 
     const eduData = {
         formula: "f' = f(v / (v ± vs))",
         variables: {
-            "f": `${frequency} Hz (source)`,
-            "v": `${speedOfSound} m/s (sound)`,
-            "vs": `${speed} m/s (source speed)`,
-            "Δf": `${dopplerShift.toFixed(2)} Hz`
+            "f": `${frequency} Hz`,
+            "v": `${speedOfSound} m/s`,
+            "vs": `${speed} m/s`,
+            "f'": `${Math.abs(displayFreq).toFixed(1)} Hz`
         },
         annotations: annotations
     };
@@ -170,7 +167,7 @@ const DopplerSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = tru
     return (
         <div style={{ width: '100%', height: '100%', backgroundColor: '#010204', position: 'relative' }}>
             <canvas ref={canvasRef} style={{ width: '100%', height: '100%', outline: 'none', display: 'block' }} />
-            {eduMode && <EduOverlay {...eduData} />}
+            <EduOverlay {...eduData} />
         </div>
     );
 };

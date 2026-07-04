@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import GenericSimulation from '../simulations/GenericSimulation';
 
 export const validateSimulation = (sim) => {
@@ -19,10 +19,10 @@ export const validateSimulation = (sim) => {
         };
     }
 
-    if (!sim.id.match(/^[A-Z_]+$/)) {
+    if (!sim.id.match(/^[A-Z0-9_]+$/)) {
         return {
             valid: false,
-            error: 'ID must be uppercase letters and underscores only'
+            error: 'ID must be uppercase letters, numbers and underscores only'
         };
     }
 
@@ -98,7 +98,6 @@ export const generateExperimentConfig = (topic, aiResponse) => {
 export const useSafeRegistry = (initialSubjects) => {
     const [subjects, setSubjects] = useState(initialSubjects);
     const [failedSims, setFailedSims] = useState([]);
-    const [loadedGenerated, setLoadedGenerated] = useState([]);
 
     const addExperiment = (subjectId, experiment) => {
         const result = safeAddExperiment(subjects, subjectId, experiment);
@@ -135,6 +134,52 @@ export const useSafeRegistry = (initialSubjects) => {
         return addExperiment('PHYSICS', config);
     };
 
+    const addCreatorSim = (draft) => {
+        const config = {
+            ...draft,
+            id: draft.id.toUpperCase(),
+            component: GenericSimulation,
+            isCreator: true,
+            icon: 'Activity'
+        };
+
+        const validation = validateSimulation(config);
+        if (!validation.valid) return validation;
+
+        setSubjects(prev => {
+            let targetSubjectId = draft.subject;
+            const exists = prev.some(s => s.id === targetSubjectId);
+
+            let updated;
+            if (!exists) {
+                const newSubject = {
+                    id: targetSubjectId,
+                    title: targetSubjectId.charAt(0) + targetSubjectId.slice(1).toLowerCase(),
+                    color: '#8b5cf6',
+                    description: `Custom courses in ${targetSubjectId.toLowerCase()}.`,
+                    experiments: []
+                };
+                updated = [...prev, newSubject];
+            } else {
+                updated = [...prev];
+            }
+
+            const subjectIndex = updated.findIndex(s => s.id === targetSubjectId);
+            const experimentExists = updated[subjectIndex].experiments.some(exp => exp.id === config.id);
+
+            if (!experimentExists) {
+                updated[subjectIndex] = {
+                    ...updated[subjectIndex],
+                    experiments: [...updated[subjectIndex].experiments, config]
+                };
+            }
+
+            return updated;
+        });
+
+        return { success: true };
+    };
+
     return {
         subjects,
         addExperiment,
@@ -142,7 +187,7 @@ export const useSafeRegistry = (initialSubjects) => {
         markFailed,
         clearFailed,
         failedSims,
-        loadedGenerated,
-        addGeneratedSim
+        addGeneratedSim,
+        addCreatorSim
     };
 };

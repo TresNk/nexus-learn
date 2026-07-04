@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 
 export const usePrediction = (experimentId, config, isRunning) => {
-    const [prediction, setPrediction] = useState(null);
-
-    useEffect(() => {
+    const prediction = useMemo(() => {
         if (!isRunning) {
-            setPrediction(calculatePrediction(experimentId, config));
+            return calculatePrediction(experimentId, config);
         }
-    }, [isRunning]);
+        return null;
+    }, [experimentId, config, isRunning]);
 
     return prediction;
 };
@@ -76,9 +75,71 @@ export const calculatePrediction = (expId, config) => {
             const strength = (1 / (Math.abs(cx + sep / 2) + 1)).toFixed(3);
             return { type: 'field', value: strength, unit: 'T', label: 'Field Strength' };
         }
-        case 'ORBITAL_MECH': return { type: 'velocity', value: (config.velocity * 1.5).toFixed(1), unit: 'km/s', label: 'Escape Velocity' };
-        case 'TITRATION_LAB': return { type: 'ph', value: (7 + config.volume * 0.05).toFixed(1), unit: '', label: 'Final pH' };
-        case 'DNA_REPLICATION': return { type: 'time', value: (config.length / config.speed).toFixed(1), unit: 's', label: 'Replication Time' };
+        case 'ELECTROMAGNETIC_INDUCTION': {
+            const v = config.velocity || 5;
+            const n = config.turns || 10;
+            const b = config.fieldStrength || 5;
+            const peakEmf = (v * n * b * 0.1).toFixed(1);
+            return { type: 'emf', value: peakEmf, unit: 'mV', label: 'Peak EMF' };
+        }
+        case 'CHEM_TITRATION': {
+            const ma = config.acidConcentration || 0.1;
+            const va = config.acidVolume || 25;
+            const mb = config.baseConcentration || 0.1;
+            const veq = (ma * va) / mb;
+            return { type: 'volume', value: veq.toFixed(1), unit: 'mL', label: 'Equivalence Point' };
+        }
+        case 'PHOTOSYNTHESIS': {
+            const light = config.lightIntensity || 50;
+            const co2 = config.co2Level || 400;
+            const rate = (light / 100) * (co2 / 400) * 10;
+            return { type: 'rate', value: rate.toFixed(2), unit: 'mmol/s', label: 'Oxygen Rate' };
+        }
+        case 'CLIMATE_PATTERNS': {
+            const tilt = config.tilt || 23.5;
+            const month = config.month || 'June';
+            const monthOffset = month === 'June' ? 1 : month === 'December' ? -1 : 0;
+            const intensity = 1000 * Math.cos((tilt * -monthOffset * Math.PI) / 180);
+            return { type: 'insolation', value: intensity.toFixed(0), unit: 'W/m²', label: 'Solar Intensity' };
+        }
+        case 'PLATE_TECTONICS': {
+            const speed = config.subductionSpeed || 5;
+            const displacement = speed * 10; // in 10 years mock
+            return { type: 'displacement', value: displacement.toFixed(1), unit: 'cm', label: '10yr Movement' };
+        }
+        case 'CIRCULAR_MOTION': {
+            const r = config.radius || 10;
+            const v = config.velocity || 5;
+            const a = (v * v) / r;
+            return { type: 'accel', value: a.toFixed(2), unit: 'm/s²', label: 'Centripetal Accel' };
+        }
+        case 'GAS_LAWS': {
+            const v = config.volume || 50;
+            const t = config.temperature || 300;
+            const p = (8.314 * t) / v;
+            return { type: 'pressure', value: p.toFixed(2), unit: 'atm', label: 'Calculated Pressure' };
+        }
+        case 'ATOMIC_STRUCTURE': {
+            const p = config.protons || 6;
+            const n = config.neutrons || 6;
+            return { type: 'mass', value: p + n, unit: 'u', label: 'Atomic Mass' };
+        }
+        case 'CHEM_EQUILIBRIUM': {
+            const t = config.temp || 298;
+            const keq = Math.exp(-1000 / (8.314 * t)) * 100;
+            return { type: 'keq', value: keq.toFixed(2), unit: '', label: 'Equilibrium Constant' };
+        }
+        case 'HUMAN_HEART': {
+            const bpm = config.bpm || 72;
+            const sv = 70; // stroke volume avg
+            const co = (bpm * sv) / 1000;
+            return { type: 'output', value: co.toFixed(1), unit: 'L/min', label: 'Cardiac Output' };
+        }
+        case 'RIVER_DYNAMICS': {
+            const s = config.slope || 5;
+            const v = Math.sqrt(2 * 9.8 * (s / 100) * 10);
+            return { type: 'velocity', value: v.toFixed(2), unit: 'm/s', label: 'Flow Velocity' };
+        }
         default:
             return null;
     }
@@ -96,23 +157,28 @@ export const getFormula = (expId) => {
         'SIMPLE_CIRCUITS': { formula: 'V = IR', variables: ['V (voltage)', 'I (current)', 'R (resistance)'] },
         'REFRACTION_SNELL': { formula: 'n₁sin(θ₁) = n₂sin(θ₂)', variables: ['n (refractive index)', 'θ (angle)'] },
         'MAGNETIC_FIELD': { formula: 'B = μ₀I / 2πr', variables: ['r (distance)', 'I (current)'] },
-        'ORBITAL_MECH': { formula: 'v = √(GM/r)', variables: ['v (velocity)', 'M (mass)'] },
-        'TITRATION_LAB': { formula: 'M₁V₁ = M₂V₂', variables: ['M (molarity)', 'V (volume)'] },
-        'DNA_REPLICATION': { formula: 't = L/v', variables: ['L (length)', 'v (speed)'] }
+        'ELECTROMAGNETIC_INDUCTION': { formula: 'ε = -N (ΔΦ / Δt)', variables: ['N (turns)', 'Φ (magnetic flux)', 't (time)'] },
+        'CIRCULAR_MOTION': { formula: 'Fc = mv²/r', variables: ['m (mass)', 'v (velocity)', 'r (radius)'] },
+        'GAS_LAWS': { formula: 'PV = nRT', variables: ['P (pressure)', 'V (volume)', 'T (temperature)'] },
+        'CHEM_TITRATION': { formula: 'M₁V₁ = M₂V₂', variables: ['M (molarity)', 'V (volume)'] },
+        'ATOMIC_STRUCTURE': { formula: 'Mass = p + n', variables: ['p (protons)', 'n (neutrons)'] },
+        'CHEM_EQUILIBRIUM': { formula: 'Kc = [C][D]/[A][B]', variables: ['[X] (concentration)'] },
+        'CELL_STRUCTURE': { formula: 'A = πr²', variables: ['r (cell radius)'] },
+        'PHOTOSYNTHESIS': { formula: '6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂', variables: ['CO₂ (carbon dioxide)', 'H₂O (water)'] },
+        'DNA_STRUCTURE': { formula: 'A=T, G≡C (Chargaff)', variables: ['Base pairs'] },
+        'HUMAN_HEART': { formula: 'CO = HR × SV', variables: ['HR (heart rate)', 'SV (stroke volume)'] },
+        'PLATE_TECTONICS': { formula: 'v = d / t', variables: ['v (velocity)', 'd (distance)', 't (time)'] },
+        'CLIMATE_PATTERNS': { formula: 'I = S₀ cos(θ)', variables: ['I (insolation)', 'S₀ (solar constant)', 'θ (angle)'] },
+        'WATER_CYCLE': { formula: 'P = E + R + ΔS', variables: ['P (precip)', 'E (evap)', 'R (runoff)'] },
+        'ROCK_CYCLE': { formula: 'T, P Equilibrium', variables: ['T (temp)', 'P (pressure)'] },
+        'RIVER_DYNAMICS': { formula: 'v = (1/n)R^(2/3)S^(1/2)', variables: ['n (roughness)', 'R (radius)', 'S (slope)'] }
     };
     return formulas[expId] || null;
 };
 
-export const useTelemetry = (experimentId, settings, isRunning) => {
+export const useTelemetry = () => {
     const [telemetry, setTelemetry] = useState({});
     const [history, setHistory] = useState([]);
-
-    useEffect(() => {
-        if (!isRunning) {
-            setTelemetry({});
-            setHistory([]);
-        }
-    }, [isRunning]);
 
     return { telemetry, history, setTelemetry, addToHistory: (entry) => setHistory(prev => [...prev.slice(-50), entry]) };
 };

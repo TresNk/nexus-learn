@@ -5,12 +5,10 @@ const EduOverlay = ({
   variables, 
   predictions, 
   actuals,
-  vectors,
   annotations,
   lazyGuide,
   showFormula = true,
   showPrediction = true,
-  showVectors = true,
   showAnnotations = true
 }) => {
   return (

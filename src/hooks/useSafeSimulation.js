@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 
 export const useSafeSimulation = (simulationName) => {
     const [error, setError] = useState(null);
-    const [isSafeMode, setIsSafeMode] = useState(false);
+    const [, setIsSafeMode] = useState(false);
     const errorCountRef = useRef(0);
 
     const wrapCallback = useCallback((callback, context) => {
@@ -62,19 +62,20 @@ export const useSafeSimulation = (simulationName) => {
         }
     }, [error]);
 
+    const getErrorCount = useCallback(() => errorCountRef.current, []);
+
     return {
         error,
-        isSafeMode,
         resetError,
         clearError,
         wrapCallback,
         wrapUpdate,
         safeRun,
-        errorCount: errorCountRef.current
+        getErrorCount
     };
 };
 
-export const createSafePhysicsEngine = (engineRef, sceneRef, simulationName) => {
+export const createSafePhysicsEngine = (simulationName) => {
     const errors = [];
 
     const safePhysicsStep = (stepFn, context) => {

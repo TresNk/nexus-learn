@@ -3,7 +3,7 @@ import * as BABYLON from '@babylonjs/core';
 import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
 import EduOverlay from '../components/EduOverlay';
 
-const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true }) => {
+const SpringSim = ({ settings, onUpdate, isRunning }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const sceneRef = useRef(null);
@@ -11,6 +11,7 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
     const springRef = useRef(null);
     const time = useRef(0);
     const [annotations, setAnnotations] = useState([]);
+    const [livePhysicsData, setLivePhysicsData] = useState(null);
 
     const k = Number(settings.k) || 20;
     const mass = Number(settings.mass) || 2;
@@ -37,14 +38,16 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
 
         const anchor = BABYLON.MeshBuilder.CreateCylinder("anchor", { diameter: 0.4, height: 1 }, scene);
         anchor.position.y = 13.5;
-        anchor.material = anchorMat(scene);
 
-        const mass = BABYLON.MeshBuilder.CreateBox("mass", { width: 2.5, height: 2.5, depth: 2.5 }, scene);
+        const aMat = new BABYLON.StandardMaterial("am", scene);
+        aMat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.6);
+        anchor.material = aMat;
+
+        const massMesh = BABYLON.MeshBuilder.CreateBox("mass", { width: 2.5, height: 2.5, depth: 2.5 }, scene);
         const massMat = new BABYLON.StandardMaterial("mm", scene);
         massMat.diffuseColor = new BABYLON.Color3(0.2, 0.5, 1);
-        massMat.emissiveColor = new BABYLON.Color3(0.05, 0.1, 0.3);
-        mass.material = massMat;
-        massRef.current = mass;
+        massMesh.material = massMat;
+        massRef.current = massMesh;
 
         const rulerMat = new BABYLON.StandardMaterial("rm", scene);
         rulerMat.diffuseColor = new BABYLON.Color3(0.3, 0.3, 0.4);
@@ -60,7 +63,6 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
         engine.runRenderLoop(() => scene.render());
         const resize = () => engine.resize();
         window.addEventListener("resize", resize);
-        setTimeout(resize, 100);
 
         return () => {
             window.removeEventListener("resize", resize);
@@ -68,13 +70,7 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
         };
     }, []);
 
-    const anchorMat = (scene) => {
-        const mat = new BABYLON.StandardMaterial("am", scene);
-        mat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.6);
-        return mat;
-    };
-
-    const createSpring = (scene, topY, bottomY, coils = 15) => {
+    const createSpring = React.useCallback((scene, topY, bottomY, coils = 15) => {
         const points = [];
         for (let i = 0; i <= coils * 4; i++) {
             const t = i / (coils * 4);
@@ -83,7 +79,7 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
             points.push(new BABYLON.Vector3(x, y, 0));
         }
         return BABYLON.MeshBuilder.CreateTube("spring", { path: points, radius: 0.08, tessellation: 8 }, scene);
-    };
+    }, []);
 
     useEffect(() => {
         if (!sceneRef.current || !massRef.current) return;
@@ -95,35 +91,31 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
         springRef.current = createSpring(sceneRef.current, 13.5, targetY + 1.25);
 
         time.current = 0;
-        setAnnotations([]);
 
-        const springForce = k * displacement;
         onUpdate({
             k: k + " N/m",
             mass: mass + " kg",
             displacement: displacement.toFixed(1) + " m",
-            "spring force": springForce.toFixed(1) + " N",
+            "spring force": (k * displacement).toFixed(1) + " N",
             period: period.toFixed(2) + " s"
         });
-    }, [settings.k, settings.mass, settings.displacement, triggerReset, k, mass, displacement, equilibriumY, period]);
+    }, [k, mass, displacement, equilibriumY, period, onUpdate, createSpring]);
 
     useEffect(() => {
         const scene = sceneRef.current;
         if (!scene || !isRunning || !massRef.current) return;
 
-        let position = -displacement;
-        let velocity = 0;
         let lastAnnTime = 0;
 
         const physicsStep = () => {
             if (!isRunning) return;
             time.current += 0.016;
 
-            const acceleration = -(k / mass) * position;
-            velocity += acceleration * 0.016;
-            position += velocity * 0.016;
+            // Simple harmonic motion equation: x(t) = A cos(omega * t)
+            const currentPos = -displacement * Math.cos(omega * time.current);
+            const velocity = displacement * omega * Math.sin(omega * time.current);
 
-            const newY = equilibriumY + position;
+            const newY = equilibriumY + currentPos;
             massRef.current.position.y = newY;
 
             if (springRef.current) {
@@ -131,23 +123,23 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
                 springRef.current = createSpring(scene, 13.5, newY + 1.25);
             }
 
-            const springForce = Math.abs(k * position);
-            const totalEnergy = 0.5 * k * position * position + 0.5 * mass * velocity * velocity;
+            const springForce = Math.abs(k * currentPos);
+            setLivePhysicsData({ displacement: Math.abs(currentPos), force: springForce, velocity, time: time.current });
 
             onUpdate({
                 k: k + " N/m",
                 mass: mass + " kg",
-                displacement: Math.abs(position).toFixed(2) + " m",
+                displacement: Math.abs(currentPos).toFixed(2) + " m",
                 "spring force": springForce.toFixed(1) + " N",
                 velocity: Math.abs(velocity).toFixed(2) + " m/s",
-                energy: totalEnergy.toFixed(1) + " J"
+                time: time.current.toFixed(1) + " s"
             });
 
             if (time.current - lastAnnTime > 0.4) {
                 lastAnnTime = time.current;
                 const anns = [
-                    { t: "0.4s", text: `Maximum extension! Spring force = ${springForce.toFixed(1)}N. Velocity = 0` },
-                    { t: "0.8s", text: `Accelerating back toward equilibrium. v = ${Math.abs(velocity).toFixed(1)} m/s` },
+                    { t: "0.4s", text: `Spring constant k = ${k} N/m` },
+                    { t: "0.8s", text: `Restoring force F = -kx` },
                 ];
                 const match = anns.find(a => parseFloat(a.t) <= time.current);
                 if (match) setAnnotations(prev => [...prev.slice(-2), match]);
@@ -156,15 +148,21 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
 
         scene.onBeforeRenderObservable.add(physicsStep);
         return () => scene.onBeforeRenderObservable.removeCallback(physicsStep);
-    }, [isRunning, k, mass, displacement, equilibriumY]);
+    }, [isRunning, k, mass, displacement, equilibriumY, onUpdate, createSpring, omega]);
+
+    const dispVal = livePhysicsData ? livePhysicsData.displacement : displacement;
+    const forceVal = livePhysicsData ? livePhysicsData.force : (k * displacement);
+    const velVal = livePhysicsData ? livePhysicsData.velocity : 0;
+    const timeVal = livePhysicsData ? livePhysicsData.time : 0;
 
     const eduData = {
         formula: "F = -kx",
         variables: {
             "k": `${k} N/m`,
-            "x": `${displacement}m (displacement)`,
-            "ω": `${omega.toFixed(2)} rad/s`,
-            "T": `${period.toFixed(2)}s`
+            "x": `${dispVal.toFixed(2)}m`,
+            "F": `${forceVal.toFixed(1)} N`,
+            "v": `${Math.abs(velVal).toFixed(2)} m/s`,
+            "t": `${timeVal.toFixed(2)}s`
         },
         annotations: annotations
     };
@@ -172,7 +170,7 @@ const SpringSim = ({ settings, onUpdate, isRunning, triggerReset, eduMode = true
     return (
         <div style={{ width: '100%', height: '100%', backgroundColor: '#010204', position: 'relative' }}>
             <canvas ref={canvasRef} style={{ width: '100%', height: '100%', outline: 'none', display: 'block' }} />
-            {eduMode && <EduOverlay {...eduData} />}
+            <EduOverlay {...eduData} />
         </div>
     );
 };
