@@ -39,6 +39,10 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
             const diff = Math.abs(expected - predicted);
             const accuracy = diff < expected * 0.1 ? 'excellent' : diff < expected * 0.25 ? 'good' : 'needs work';
             setPredictionResult({ expected, predicted, diff, accuracy });
+
+            if (accuracy === 'excellent') {
+                playSuccessChime();
+            }
         } else {
             setPredictionResult(null);
         }
@@ -186,6 +190,9 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
             )}
 
             <div style={styles.topBar}>
+                <div style={{...styles.connectionBadge, backgroundColor: isConnected ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: isConnected ? '#10b981' : '#ef4444'}}>
+                    {isConnected ? '● Multiplayer Active' : '○ Offline'}
+                </div>
                 <button 
                     onClick={() => setEduMode(!eduMode)}
                     style={{...styles.topBtn, ...(eduMode ? styles.topBtnActive : {})}}
@@ -295,6 +302,7 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                             }}
                             onError={handleError}
                             eduMode={eduMode}
+                            lazyGuide={activeExp?.lazyGuide}
                         />
                     </Suspense>
                 </ErrorBoundary>
@@ -307,7 +315,7 @@ const LabStage = ({ activeExp, config, setConfig, isRunning, setIsRunning, reset
                         <input
                             type="number"
                             value={config[key]}
-                            onChange={(e) => setConfig({ ...config, [key]: Number(e.target.value) })}
+                            onChange={(e) => handleConfigChange(key, e.target.value)}
                             style={styles.input}
                         />
                     </div>
@@ -338,6 +346,16 @@ const ErrorFallback = ({ simulationName, onRetry }) => (
 );
 
 const styles = {
+    connectionBadge: {
+        fontSize: '10px',
+        padding: '4px 10px',
+        borderRadius: '12px',
+        marginRight: '15px',
+        fontWeight: 'bold',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px'
+    },
     loader: { 
         height: '100%', 
         display: 'flex', 

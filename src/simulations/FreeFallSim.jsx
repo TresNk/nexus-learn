@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as BABYLON from '@babylonjs/core';
-import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
+import { createLabEnvironment, createLabLighting, createLabCamera, enableWebXR } from '../utils/labEnvironment';
+import { triggerExplosion, shakeCamera } from '../utils/vfx';
+import { playImpactSound } from '../utils/audio';
 import EduOverlay from '../components/EduOverlay';
 
 const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, eduMode = true }) => {
@@ -41,6 +43,8 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, eduMode = true }
             labelMat.emissiveColor = new BABYLON.Color3(0.5, 0.5, 0.5);
             label.material = labelMat;
         }
+
+    enableWebXR(scene);
 
         const ball = BABYLON.MeshBuilder.CreateSphere("ball", { diameter: 1.5 }, scene);
         const ballMat = new BABYLON.StandardMaterial("bm", scene);
@@ -144,7 +148,8 @@ const FreeFallSim = ({ settings, onUpdate, isRunning, onImpact, eduMode = true }
             "v": `${curV.toFixed(1)} m/s`,
             "t": `${curT.toFixed(2)}s`
         },
-        annotations: annotations
+        annotations: annotations,
+        lazyGuide
     };
 
     return (

@@ -28,7 +28,7 @@ export const useSafeSimulation = (simulationName) => {
                 }
                 
                 console.error(`[SafeSim] Error in ${simulationName} (${context}):`, e);
-                return null;
+                throw e;
             }
         };
     }, [simulationName]);
@@ -46,7 +46,7 @@ export const useSafeSimulation = (simulationName) => {
                 message: `Async error in ${context}: ${e.message}`,
                 originalError: e.message
             });
-            return null;
+            throw e;
         }
     }, []);
 

@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as BABYLON from '@babylonjs/core';
 import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
+import { triggerExplosion, shakeCamera } from '../utils/vfx';
+import { playImpactSound } from '../utils/audio';
 import EduOverlay from '../components/EduOverlay';
 
 const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, eduMode = true }) => {
@@ -184,7 +186,8 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, eduMode = true
             "g": "9.81 m/s²",
             "t": `${displayTime.toFixed(2)}s`
         },
-        annotations: annotations
+        annotations: annotations,
+        lazyGuide
     };
 
     return (
