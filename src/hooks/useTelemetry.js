@@ -10,7 +10,6 @@ export const useTelemetry = () => {
             eventType,
             details,
         };
-        console.log("📊 NEXUS_LOG:", newEntry);
         setLogs(prev => [...prev.slice(-99), newEntry]);
         return "STABLE";
     };

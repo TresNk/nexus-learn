@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as BABYLON from '@babylonjs/core';
 import { createLabEnvironment, createLabLighting, createLabCamera } from '../utils/labEnvironment';
+import { triggerExplosion, shakeCamera } from '../utils/vfx';
+import { playImpactSound } from '../utils/audio';
 import EduOverlay from '../components/EduOverlay';
 
-const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }) => {
+const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset, lazyGuide }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const sceneRef = useRef(null);
@@ -36,7 +38,7 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }
 
         createLabEnvironment(scene, { gridSize: 50, showGrid: true, showAxis: false });
         createLabLighting(scene, { intensity: 0.9 });
-        createLabCamera(scene, new BABYLON.Vector3(25, 12, 0), { radius: 60 });
+        const camera = createLabCamera(scene, new BABYLON.Vector3(25, 12, 0), { radius: 60 });
 
         engineRef.current = engine;
         sceneRef.current = scene;
@@ -148,6 +150,9 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }
                     ballRef.current.position.y = 0;
                     const finalAnn = { t: `t=${time.current.toFixed(1)}s`, text: `Landed at x=${posX.toFixed(1)}m (predicted: ${(v0 * v0 * Math.sin(2 * angleRad) / 9.8).toFixed(1)}m)` };
                     setAnnotations(prev => [...prev.slice(-2), finalAnn]);
+                    triggerExplosion(scene, ballRef.current.position.clone());
+                    shakeCamera(camera, scene);
+                    playImpactSound();
                     onImpact();
                 }
             }
@@ -178,7 +183,8 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, triggerReset }
             "g": "9.81 m/s² (gravity)",
             "t": `${time.current.toFixed(2)}s`
         },
-        annotations: annotations
+        annotations: annotations,
+        lazyGuide
     };
 
     return (

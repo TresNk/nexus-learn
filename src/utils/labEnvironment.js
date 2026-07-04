@@ -136,3 +136,15 @@ export const createLabSkybox = (scene) => {
     
     return skybox;
 };
+
+export const enableWebXR = async (scene) => {
+    try {
+        const xrHelper = await scene.createDefaultXRExperienceAsync({
+            floorMeshes: [scene.getMeshByName("ground")]
+        });
+        return xrHelper;
+    } catch (e) {
+        console.warn("WebXR not supported or failed to initialize", e);
+        return null;
+    }
+};

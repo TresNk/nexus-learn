@@ -1,7 +1,6 @@
 // src/services/aiService.js
-// Using Google Gemini API
 
-const GOOGLE_API_KEY = "YOUR_GOOGLE_API_KEY"; // Get from https://aistudio.google.com/app/apikey
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
 
 export const getNexusResponse = async (userMessage, physicsData, chatHistory) => {
     const systemPrompt = `
@@ -20,7 +19,7 @@ INSTRUCTIONS:
 `;
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_API_KEY}`, {
+        const response = await fetch(`${BACKEND_URL}/api/chat`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -70,7 +69,7 @@ Make it educational and appropriate for students.
 `;
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_API_KEY}`, {
+        const response = await fetch(`${BACKEND_URL}/api/generate`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -80,6 +79,7 @@ Make it educational and appropriate for students.
                 generationConfig: {
                     temperature: 0.3,
                     maxOutputTokens: 500,
+                    responseMimeType: "application/json"
                 }
             })
         });
@@ -91,14 +91,7 @@ Make it educational and appropriate for students.
         }
 
         const text = data.candidates[0].content.parts[0].text;
-        
-        // Try to parse JSON from the response
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
-        
-        return null;
+        return JSON.parse(text);
     } catch (error) {
         console.error("Generation Error:", error);
         return null;

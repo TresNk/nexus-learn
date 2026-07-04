@@ -76,6 +76,9 @@ export const calculatePrediction = (expId, config) => {
             const strength = (1 / (Math.abs(cx + sep / 2) + 1)).toFixed(3);
             return { type: 'field', value: strength, unit: 'T', label: 'Field Strength' };
         }
+        case 'ORBITAL_MECH': return { type: 'velocity', value: (config.velocity * 1.5).toFixed(1), unit: 'km/s', label: 'Escape Velocity' };
+        case 'TITRATION_LAB': return { type: 'ph', value: (7 + config.volume * 0.05).toFixed(1), unit: '', label: 'Final pH' };
+        case 'DNA_REPLICATION': return { type: 'time', value: (config.length / config.speed).toFixed(1), unit: 's', label: 'Replication Time' };
         default:
             return null;
     }
@@ -93,6 +96,9 @@ export const getFormula = (expId) => {
         'SIMPLE_CIRCUITS': { formula: 'V = IR', variables: ['V (voltage)', 'I (current)', 'R (resistance)'] },
         'REFRACTION_SNELL': { formula: 'n₁sin(θ₁) = n₂sin(θ₂)', variables: ['n (refractive index)', 'θ (angle)'] },
         'MAGNETIC_FIELD': { formula: 'B = μ₀I / 2πr', variables: ['r (distance)', 'I (current)'] },
+        'ORBITAL_MECH': { formula: 'v = √(GM/r)', variables: ['v (velocity)', 'M (mass)'] },
+        'TITRATION_LAB': { formula: 'M₁V₁ = M₂V₂', variables: ['M (molarity)', 'V (volume)'] },
+        'DNA_REPLICATION': { formula: 't = L/v', variables: ['L (length)', 'v (speed)'] }
     };
     return formulas[expId] || null;
 };

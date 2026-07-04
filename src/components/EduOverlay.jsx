@@ -7,6 +7,7 @@ const EduOverlay = ({
   actuals,
   vectors,
   annotations,
+  lazyGuide,
   showFormula = true,
   showPrediction = true,
   showVectors = true,
@@ -14,6 +15,14 @@ const EduOverlay = ({
 }) => {
   return (
     <div style={styles.container}>
+      {/* Lazy Guide Panel */}
+      {lazyGuide && (
+        <div style={styles.lazyGuidePanel}>
+          <div style={styles.panelTitle}>THE "LAZY" GUIDE</div>
+          <div style={styles.lazyGuideText}>{lazyGuide}</div>
+        </div>
+      )}
+
       {/* Formula Panel */}
       {showFormula && formula && (
         <div style={styles.formulaPanel}>
@@ -102,6 +111,20 @@ const styles = {
     color: '#3b82f6',
     letterSpacing: '0.1em',
     marginBottom: '10px',
+  },
+  lazyGuidePanel: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    backdropFilter: 'blur(10px)',
+    border: '1px solid rgba(16, 185, 129, 0.3)',
+    borderRadius: '12px',
+    padding: '15px',
+    pointerEvents: 'auto',
+  },
+  lazyGuideText: {
+    fontSize: '13px',
+    color: '#34d399',
+    fontStyle: 'italic',
+    lineHeight: '1.4'
   },
   formula: {
     fontSize: '16px',

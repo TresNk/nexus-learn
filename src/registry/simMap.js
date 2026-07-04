@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, Activity, Beaker, FlaskConical, Wind, Clock, ArrowDown, Link2, Waves, Zap, Plug, Eye, Magnet } from 'lucide-react';
+import { Target, Activity, Beaker, FlaskConical, Wind, Clock, ArrowDown, Link2, Waves, Zap, Plug, Eye, Magnet, Orbit, Focus, ZapOff, Anchor, TestTube, Microscope, HeartPulse, Brain, Dna, Leaf, Bug } from 'lucide-react';
 
 const ProjectileSim = React.lazy(() => import('../simulations/ProjectileSim'));
 const DynamicsSim = React.lazy(() => import('../simulations/DynamicsSim'));
@@ -11,7 +11,9 @@ const DopplerSim = React.lazy(() => import('../simulations/DopplerSim'));
 const CircuitSim = React.lazy(() => import('../simulations/CircuitSim'));
 const RefractionSim = React.lazy(() => import('../simulations/RefractionSim'));
 const MagneticFieldSim = React.lazy(() => import('../simulations/MagneticFieldSim'));
-const ChemistrySim = React.lazy(() => import('../simulations/ChemistrySim'));
+const OrbitalSim = React.lazy(() => import('../simulations/OrbitalSim'));
+const TitrationSim = React.lazy(() => import('../simulations/TitrationSim'));
+const DNASim = React.lazy(() => import('../simulations/DNASim'));
 
 export const SUBJECTS = [
     {
@@ -27,6 +29,7 @@ export const SUBJECTS = [
                 icon: Target,
                 component: ProjectileSim,
                 description: 'Study 2D kinematics and parabolic flight paths.',
+                mission: 'Mission: Mars Supply Drop. You have a rover traveling at 30m/s. Calculate the launch angle to get the battery pack over the crater.',
                 difficulty: 1,
                 sims: ['trajectory', 'range calc', 'angle slider'],
                 initialConfig: { velocity: 30, angle: 45, height: 10 }
@@ -37,6 +40,7 @@ export const SUBJECTS = [
                 icon: Activity,
                 component: DynamicsSim,
                 description: 'Explore Force, Mass, and Acceleration (F=ma).',
+                mission: 'Mission: Rescue Tug. Calculate the exact force needed to tow a stranded 10kg satellite out of orbit.',
                 difficulty: 1,
                 sims: ['force arrow', 'a=F/m', 'friction toggle'],
                 initialConfig: { mass: 10, force: 50 }
@@ -47,6 +51,7 @@ export const SUBJECTS = [
                 icon: Clock,
                 component: PendulumSim,
                 description: 'Adjust length and mass; watch period change in real time.',
+                mission: 'Mission: Grandfather Clock. Adjust the pendulum length to perfectly synchronize the timing cycle.',
                 difficulty: 1,
                 sims: ['drag release', 'timer', 'graph'],
                 initialConfig: { length: 8, angle: 45 }
@@ -120,7 +125,19 @@ export const SUBJECTS = [
                 difficulty: 2,
                 sims: ['magnet drag', 'field lines', 'compass needle'],
                 initialConfig: { separation: 10, orientation: 'N-N', fieldLines: 8, compassX: 5 }
-            }
+            },
+            {
+                id: 'ORBITAL_MECH',
+                title: 'Orbital Mechanics',
+                icon: Orbit,
+                component: OrbitalSim,
+                description: 'Explore gravity wells and Kepler’s laws in 3D.',
+                mission: 'Mission: Voyager. Calculate the correct velocity for a slingshot maneuver around Jupiter.',
+                lazyGuide: "Gravity pulls it in, speed throws it out. If they match, it orbits! If speed wins, it escapes.",
+                difficulty: 3,
+                sims: ['gravity well', 'slingshot', 'kepler laws'],
+                initialConfig: { velocity: 15, mass: 100 }
+            },
         ]
     },
     {
@@ -131,14 +148,37 @@ export const SUBJECTS = [
         description: 'Explore atomic structures and chemical reactions.',
         experiments: [
             {
-                id: 'ATOMIC_BONDS',
-                title: 'Ionic Bonding',
+                id: 'TITRATION_LAB',
+                title: 'Titration Lab',
                 icon: FlaskConical,
-                component: ChemistrySim,
-                description: 'Understand how atoms share or trade electrons.',
+                component: TitrationSim,
+                description: 'Interactive burette with a live pH graph.',
+                mission: 'Mission: Neutralization. Drop the exact amount of acid to reach the equivalence point.',
+                lazyGuide: "Acids and bases cancel each other out. Titration is just slowly adding one until they perfectly match.",
+                difficulty: 2,
+                sims: ['burette', 'ph graph', 'indicators'],
+                initialConfig: { volume: 50, molarity: 0.1 }
+            }
+        ]
+    },
+    {
+        id: 'BIOLOGY',
+        title: 'Biology & Ecosystems',
+        icon: Microscope,
+        color: '#8b5cf6',
+        description: 'Discover the mechanisms of life from cells to populations.',
+        experiments: [
+            {
+                id: 'DNA_REPLICATION',
+                title: 'DNA Replication',
+                icon: Dna,
+                component: DNASim,
+                description: 'A 3D unwinding helix where you match base pairs.',
+                mission: 'Mission: Polymerase. Match the correct base pairs against the timer to replicate the strand.',
+                lazyGuide: "DNA is a zipper. Unzip it, and plug A to T, and C to G on both sides. Boom, two identical zippers.",
                 difficulty: 1,
-                sims: ['bond builder', 'electronegativity', '3D model'],
-                initialConfig: { atoms: 2 }
+                sims: ['helicase', 'base pairing', 'timer'],
+                initialConfig: { speed: 1, length: 20 }
             }
         ]
     }
