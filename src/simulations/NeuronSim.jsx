@@ -23,7 +23,8 @@ const NeuronSim = ({ settings, isRunning, triggerReset, lazyGuide, eduMode = tru
         const soma = BABYLON.MeshBuilder.CreateSphere('soma', { diameter: 4, segments: 32 }, scene);
         const somaMat = new BABYLON.PBRMaterial('somaMat', scene);
         somaMat.albedoColor = new BABYLON.Color3(0.9, 0.7, 0.6);
-        somaMat.subSurface = new BABYLON.SubSurfaceConfiguration(somaMat);
+        somaMat.metallic = 0.0;
+        somaMat.roughness = 0.4;
         soma.material = somaMat;
         soma.position.x = -8;
 

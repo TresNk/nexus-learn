@@ -63,11 +63,10 @@ const OrbitalSim = ({ settings, isRunning, triggerReset, lazyGuide, eduMode = tr
 
         // Gravity well grid visualization
         const gravityGrid = BABYLON.MeshBuilder.CreateGround("gravityGrid", { width: 200, height: 200 }, scene);
-        const gridMat = new BABYLON.GridMaterial("gridMat", scene);
-        gridMat.majorUnitFrequency = 10;
-        gridMat.minorUnitVisibility = 0.3;
-        gridMat.gridRatio = 10;
-        gridMat.opacity = 0.3;
+        const gridMat = new BABYLON.StandardMaterial("gridMat", scene);
+        gridMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.2);
+        gridMat.emissiveColor = new BABYLON.Color3(0.05, 0.05, 0.1);
+        gridMat.alpha = 0.3;
         gridMat.backFaceCulling = false;
         gravityGrid.position.y = -0.5;
 
