@@ -3,46 +3,56 @@
 node_modules/
 
 # Build artifacts
-build/
 dist/
-*.js.map
-
-# Environment
-.env
-.env.local
-*.env.*
-
-# Editors
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Logs
-*.log
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
+build/
+target/
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-*.so
-*.egg-info/
-.eggs/
-.mypy_cache/
-.pytest_cache/
+*.py~
+
+# Virtual environments
+venv/
+.venv/
+.env
+.env.local
+*.env.*
+
+# Logs
+*.log
 
 # Temporary files
 *.tmp
-*~
+*.temp
+*.swp
+*.swo
+
+# OS generated files
 .DS_Store
 Thumbs.db
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pytest
+.pytest_cache/
 
 # Compressed files
 *.zip
@@ -67,4 +77,14 @@ Thumbs.db
 *.tar.bz2
 *.tar.xz
 *.tar.zst
+
+# Gradle
+.gradle/
+
+# Compiled binaries
+*.exe
+*.dll
+*.so
+*.a
+*.out
 ```
