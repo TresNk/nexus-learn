@@ -212,3 +212,39 @@ export const createLabSkybox = (scene, options = {}) => {
     skybox.material = skyboxMaterial;
     return skybox;
 };
+
+// WebXR support for VR/AR experiences
+export const enableWebXR = async (scene) => {
+    try {
+        // Check if WebXR is supported
+        if (!BABYLON.WebXRDefaultExperience) {
+            console.warn('WebXR not available in this environment');
+            return null;
+        }
+
+        // Create default XR experience with teleportation and movement
+        const xr = await scene.createDefaultXRExperienceAsync({
+            floorMeshes: [scene.getMeshByName('ground')].filter(Boolean),
+            uiOptions: {
+                sessionMode: 'immersive-vr',
+                referenceSpaceType: 'local-floor'
+            },
+            inputOptions: {
+                enablePointerSelection: true
+            }
+        });
+
+        // Add hand tracking support for Quest devices
+        if (xr.inputManager) {
+            xr.inputManager.onControllerAddedObservable.add((controller) => {
+                console.log('XR Controller connected:', controller);
+            });
+        }
+
+        console.log('WebXR enabled successfully');
+        return xr;
+    } catch (error) {
+        console.warn('Failed to enable WebXR:', error.message);
+        return null;
+    }
+};
