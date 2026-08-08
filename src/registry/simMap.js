@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, Activity, Beaker, FlaskConical, Wind, Clock, ArrowDown, Link2, Waves, Zap, Plug, Eye, Magnet, Globe, Microscope, Mountain, TreeDeciduous, ThermometerSun, Orbit, Atom, Scale, Dna, Copy, Heart, CloudRain, Gem, Hexagon } from 'lucide-react';
+import { Target, Activity, Beaker, FlaskConical, Wind, Clock, ArrowDown, Link2, Waves, Zap, Plug, Eye, Magnet, Globe, Microscope, Mountain, TreeDeciduous, ThermometerSun, Orbit, Atom, Scale, Dna, Copy, Heart, CloudRain, Gem, Hexagon, TestTube, Brain, Lock, Rocket, Battery, Volume2, Sliders } from 'lucide-react';
 
 const ProjectileSim = React.lazy(() => import('../simulations/ProjectileSim'));
 const DynamicsSim = React.lazy(() => import('../simulations/DynamicsSim'));
@@ -14,15 +14,21 @@ const MagneticFieldSim = React.lazy(() => import('../simulations/MagneticFieldSi
 const ElectromagneticSim = React.lazy(() => import('../simulations/ElectromagneticSim'));
 const CircularMotionSim = React.lazy(() => import('../simulations/CircularMotionSim'));
 const GasLawsSim = React.lazy(() => import('../simulations/GasLawsSim'));
+const OrbitalSim = React.lazy(() => import('../simulations/OrbitalSim'));
 const ChemistrySim = React.lazy(() => import('../simulations/ChemistrySim'));
 const AtomicStructureSim = React.lazy(() => import('../simulations/AtomicStructureSim'));
 const MolecularSim = React.lazy(() => import('../simulations/MolecularSim'));
 const EquilibriumSim = React.lazy(() => import('../simulations/EquilibriumSim'));
+const TitrationSim = React.lazy(() => import('../simulations/TitrationSim'));
+const PolymerizationSim = React.lazy(() => import('../simulations/PolymerizationSim'));
+const ElectrochemistrySim = React.lazy(() => import('../simulations/ElectrochemistrySim'));
 const CellSim = React.lazy(() => import('../simulations/CellSim'));
 const PhotosynthesisSim = React.lazy(() => import('../simulations/PhotosynthesisSim'));
 const DnaSim = React.lazy(() => import('../simulations/DnaSim'));
 const MitosisSim = React.lazy(() => import('../simulations/MitosisSim'));
 const HeartSim = React.lazy(() => import('../simulations/HeartSim'));
+const NeuronSim = React.lazy(() => import('../simulations/NeuronSim'));
+const EnzymeSim = React.lazy(() => import('../simulations/EnzymeSim'));
 const TectonicsSim = React.lazy(() => import('../simulations/TectonicsSim'));
 const ClimateSim = React.lazy(() => import('../simulations/ClimateSim'));
 const WaterCycleSim = React.lazy(() => import('../simulations/WaterCycleSim'));
