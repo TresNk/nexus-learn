@@ -113,15 +113,53 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, eduMode = true
         const scene = sceneRef.current;
         if (!scene || !isRunning) return;
 
+        // Physics constants with air resistance support
         const g = -9.8;
+        const airDensity = 1.225; // kg/m³ at sea level
+        const dragCoefficient = settings.dragCoefficient || 0.47; // Sphere default
+        const crossSectionalArea = Math.PI * Math.pow(0.75, 2); // Based on ball radius
+        const mass = settings.mass || 1.0; // kg
+        
         let lastAnnotationTime = 0;
+        let hasAirResistance = settings.airResistance !== false; // Default enabled
 
         const physicsStep = () => {
             if (isRunning && ballRef.current && ballRef.current.position.y > 0) {
                 time.current += 0.016;
-                const posX = muzzleX + (vx * time.current);
+                
+                // Calculate velocity components
+                let currentVy = vy_init + g * time.current;
+                let currentVx = vx;
+                
+                // Air resistance calculation: Fd = 0.5 * ρ * v² * Cd * A
+                if (hasAirResistance) {
+                    const speed = Math.sqrt(vx * vx + currentVy * currentVy);
+                    if (speed > 0) {
+                        // Drag force magnitude
+                        const dragForce = 0.5 * airDensity * speed * speed * dragCoefficient * crossSectionalArea;
+                        
+                        // Drag acceleration (F = ma, so a = F/m)
+                        const dragAccel = dragForce / mass;
+                        
+                        // Apply drag opposite to velocity direction
+                        const dragX = -(vx / speed) * dragAccel;
+                        const dragY = -(currentVy / speed) * dragAccel;
+                        
+                        // Update velocities with drag
+                        currentVx = vx + dragX * time.current;
+                        currentVy = vy_init + (g + dragY) * time.current;
+                        
+                        // Terminal velocity check: vt = sqrt(2mg / ρACd)
+                        const terminalVelocity = Math.sqrt((2 * mass * 9.8) / (airDensity * crossSectionalArea * dragCoefficient));
+                        if (Math.abs(currentVy) > terminalVelocity) {
+                            currentVy = -terminalVelocity * Math.sign(currentVy);
+                        }
+                    }
+                }
+                
+                // Position calculation with drag-influenced velocities
+                const posX = muzzleX + (currentVx * time.current);
                 const posY = muzzleY + (vy_init * time.current) + (0.5 * g * Math.pow(time.current, 2));
-                const currentVy = vy_init + g * time.current;
 
                 ballRef.current.position.x = posX;
                 ballRef.current.position.y = Math.max(0, posY);
@@ -129,9 +167,10 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, eduMode = true
                 setLivePhysicsData({
                     x: posX,
                     y: posY,
-                    vx: vx,
+                    vx: currentVx,
                     vy: currentVy,
-                    t: time.current
+                    t: time.current,
+                    drag: hasAirResistance ? ((0.5 * airDensity * (currentVx*currentVx + currentVy*currentVy) * dragCoefficient * crossSectionalArea).toFixed(3)) : '0'
                 });
 
                 pointsRef.current.push(ballRef.current.position.clone());
@@ -142,8 +181,8 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, eduMode = true
                 }
 
                 if (velocityArrowRef.current) velocityArrowRef.current.dispose();
-                const arrowLength = Math.sqrt(vx * vx + currentVy * currentVy) / 5;
-                const arrowDir = new BABYLON.Vector3(vx / arrowLength, currentVy / arrowLength, 0).normalize();
+                const arrowLength = Math.sqrt(currentVx * currentVx + currentVy * currentVy) / 5;
+                const arrowDir = new BABYLON.Vector3(currentVx / arrowLength, currentVy / arrowLength, 0).normalize();
                 const arrowEnd = ballRef.current.position.add(arrowDir.scale(arrowLength));
                 velocityArrowRef.current = BABYLON.MeshBuilder.CreateLines("velArrow", {
                     points: [ballRef.current.position.add(new BABYLON.Vector3(0, 0.75, 0)), arrowEnd.add(new BABYLON.Vector3(0, 0.75, 0))]
@@ -153,14 +192,15 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, eduMode = true
                 onUpdate({
                     x: posX.toFixed(1),
                     y: posY.toFixed(1),
-                    vx: vx.toFixed(1),
+                    vx: currentVx.toFixed(1),
                     vy: currentVy.toFixed(1),
-                    t: time.current.toFixed(1)
+                    t: time.current.toFixed(1),
+                    dragForce: hasAirResistance ? ((0.5 * airDensity * (currentVx*currentVx + currentVy*currentVy) * dragCoefficient * crossSectionalArea).toFixed(2)) : '0 N'
                 });
 
                 if (time.current - lastAnnotationTime > 0.5 && time.current < maxTime) {
                     lastAnnotationTime = time.current;
-                    const annotation = getAnnotation(time.current, posX, posY, vx, currentVy, h0_val);
+                    const annotation = getAnnotation(time.current, posX, posY, currentVx, currentVy, h0_val);
                     setAnnotations(prev => [...prev.slice(-2), annotation]);
                 }
 
@@ -173,7 +213,7 @@ const ProjectileSim = ({ settings, onUpdate, isRunning, onImpact, eduMode = true
 
         scene.onBeforeRenderObservable.add(physicsStep);
         return () => scene.onBeforeRenderObservable.removeCallback(physicsStep);
-    }, [isRunning, muzzleX, muzzleY, vx, vy_init, onUpdate, maxTime, getAnnotation, h0_val, onImpact]);
+    }, [isRunning, muzzleX, muzzleY, vx, vy_init, onUpdate, maxTime, getAnnotation, h0_val, onImpact, settings]);
 
     const displayTime = isRunning && livePhysicsData ? livePhysicsData.t : 0;
 

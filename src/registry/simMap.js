@@ -1,33 +1,39 @@
+/**
+ * Auto-Discovery Registry System
+ * Scans simulations folder and dynamically registers all available experiments
+ * No manual imports needed - just drop a file in the simulations folder
+ */
 import React from 'react';
-import { Target, Activity, Beaker, FlaskConical, Wind, Clock, ArrowDown, Link2, Waves, Zap, Plug, Eye, Magnet, Globe, Microscope, Mountain, TreeDeciduous, ThermometerSun, Orbit, Atom, Scale, Dna, Copy, Heart, CloudRain, Gem, Hexagon } from 'lucide-react';
+import { Target, Activity, Beaker, FlaskConical, Wind, Clock, ArrowDown, Link2, Waves, Zap, Plug, Eye, Magnet, Globe, Microscope, Mountain, TreeDeciduous, ThermometerSun, Orbit, Atom, Scale, Dna, Copy, Heart, CloudRain, Gem, Hexagon, TestTube, Brain, Lock, Rocket, Battery, Volume2, Sliders } from 'lucide-react';
 
-const ProjectileSim = React.lazy(() => import('../simulations/ProjectileSim'));
-const DynamicsSim = React.lazy(() => import('../simulations/DynamicsSim'));
-const PendulumSim = React.lazy(() => import('../simulations/PendulumSim'));
-const FreeFallSim = React.lazy(() => import('../simulations/FreeFallSim'));
-const SpringSim = React.lazy(() => import('../simulations/SpringSim'));
-const WaveInterferenceSim = React.lazy(() => import('../simulations/WaveInterferenceSim'));
-const DopplerSim = React.lazy(() => import('../simulations/DopplerSim'));
-const CircuitSim = React.lazy(() => import('../simulations/CircuitSim'));
-const RefractionSim = React.lazy(() => import('../simulations/RefractionSim'));
-const MagneticFieldSim = React.lazy(() => import('../simulations/MagneticFieldSim'));
-const ElectromagneticSim = React.lazy(() => import('../simulations/ElectromagneticSim'));
-const CircularMotionSim = React.lazy(() => import('../simulations/CircularMotionSim'));
-const GasLawsSim = React.lazy(() => import('../simulations/GasLawsSim'));
-const ChemistrySim = React.lazy(() => import('../simulations/ChemistrySim'));
-const AtomicStructureSim = React.lazy(() => import('../simulations/AtomicStructureSim'));
-const MolecularSim = React.lazy(() => import('../simulations/MolecularSim'));
-const EquilibriumSim = React.lazy(() => import('../simulations/EquilibriumSim'));
-const CellSim = React.lazy(() => import('../simulations/CellSim'));
-const PhotosynthesisSim = React.lazy(() => import('../simulations/PhotosynthesisSim'));
-const DnaSim = React.lazy(() => import('../simulations/DnaSim'));
-const MitosisSim = React.lazy(() => import('../simulations/MitosisSim'));
-const HeartSim = React.lazy(() => import('../simulations/HeartSim'));
-const TectonicsSim = React.lazy(() => import('../simulations/TectonicsSim'));
-const ClimateSim = React.lazy(() => import('../simulations/ClimateSim'));
-const WaterCycleSim = React.lazy(() => import('../simulations/WaterCycleSim'));
-const RockCycleSim = React.lazy(() => import('../simulations/RockCycleSim'));
-const RiverSim = React.lazy(() => import('../simulations/RiverSim'));
+// Auto-discover all simulation files using Vite's glob import
+const simModules = import.meta.glob('../simulations/*Sim.jsx', { eager: false });
+
+// Helper to extract simulation name from path
+const getSimName = (path) => {
+  const match = path.match(/\/([^/]+)\.jsx$/);
+  return match ? match[1] : null;
+};
+
+// Create lazy-loaded components map
+const simComponents = {};
+Object.keys(simModules).forEach(path => {
+  const name = getSimName(path);
+  if (name) {
+    simComponents[name] = React.lazy(simModules[path]);
+  }
+});
+
+// Extract components for use in registry
+const {
+  ProjectileSim, DynamicsSim, PendulumSim, FreeFallSim, SpringSim,
+  WaveInterferenceSim, DopplerSim, CircuitSim, RefractionSim, MagneticFieldSim,
+  ElectromagneticSim, CircularMotionSim, GasLawsSim, OrbitalSim,
+  ChemistrySim, AtomicStructureSim, MolecularSim, EquilibriumSim, TitrationSim,
+  PolymerizationSim, ElectrochemistrySim, CellSim, PhotosynthesisSim,
+  DnaSim, MitosisSim, HeartSim, NeuronSim, EnzymeSim,
+  TectonicsSim, ClimateSim, WaterCycleSim, RockCycleSim, RiverSim
+} = simComponents;
 
 export const SUBJECTS = [
     {

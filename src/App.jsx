@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { SUBJECTS } from './registry/simMap';
 import LabStage from './components/LabStage';
 import { getNexusResponse, generateSimulationConfig } from './services/aiService';
@@ -7,16 +7,53 @@ import { useSafeRegistry } from './registry/SafeRegistry';
 import NexusCreator from './components/NexusCreator';
 import TelemetryGraph from './components/TelemetryGraph';
 
+// Loading tips for educational value
+const LOADING_TIPS = [
+    "Did you know? In a vacuum, all objects fall at the same rate regardless of mass.",
+    "Tip: Use the telemetry panel to track real-time physics data during simulations.",
+    "Fun Fact: Light travels at 299,792,458 meters per second in a vacuum.",
+    "Remember: Air resistance increases with the square of velocity.",
+    "Pro Tip: Switch to VR mode for an immersive 3D learning experience."
+];
+
 function App() {
-  const [view, setView] = useState('DASHBOARD');
-  const [isCreatorOpen, setIsCreatorOpen] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState(null);
-  const [activeExp, setActiveExp] = useState(null);
-  const [config, setConfig] = useState({});
-  const [isRunning, setIsRunning] = useState(false);
-  const [resetKey, setResetKey] = useState(0);
-  const [liveData, setLiveData] = useState({});
-  const [isGenerating, setIsGenerating] = useState(false);
+    const [view, setView] = useState('DASHBOARD');
+    const [isCreatorOpen, setIsCreatorOpen] = useState(false);
+    const [selectedSubject, setSelectedSubject] = useState(null);
+    const [activeExp, setActiveExp] = useState(null);
+    const [config, setConfig] = useState({});
+    const [isRunning, setIsRunning] = useState(false);
+    const [resetKey, setResetKey] = useState(0);
+    const [liveData, setLiveData] = useState({});
+    const [isGenerating, setIsGenerating] = useState(false);
+    
+    // Async loading state for race condition prevention
+    const [babylonLoaded, setBabylonLoaded] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [currentTip, setCurrentTip] = useState(LOADING_TIPS[0]);
+
+    // Load Babylon.js asynchronously to prevent blocking main thread
+    useEffect(() => {
+        const loadDependencies = async () => {
+            setIsLoading(true);
+            try {
+                await import('@babylonjs/core');
+                setBabylonLoaded(true);
+                // Rotate tips every 2 seconds during loading
+                const tipInterval = setInterval(() => {
+                    setCurrentTip(LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)]);
+                }, 2000);
+                setTimeout(() => {
+                    clearInterval(tipInterval);
+                    setIsLoading(false);
+                }, 1500); // Minimum loading time for UX
+            } catch (error) {
+                console.error('Failed to load Babylon.js:', error);
+                setIsLoading(false);
+            }
+        };
+        loadDependencies();
+    }, []);
 
   const { subjects, addGeneratedSim, failedSims, markFailed, clearFailed, addCreatorSim } = useSafeRegistry(SUBJECTS);
 
@@ -134,6 +171,20 @@ function App() {
 
   return (
     <div style={styles.container} className="dashboard-bg">
+      {/* LOADING SCREEN - Prevents white screen of death */}
+      {isLoading && (
+        <div style={styles.loadingScreen}>
+          <div style={styles.loadingSpinner}></div>
+          <h2 style={styles.loadingTitle}>Initializing Nexus Learn Platform</h2>
+          <p style={styles.loadingTip}>{currentTip}</p>
+          <div style={styles.loadingProgress}>
+            <div style={styles.progressBar}></div>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && (
+        <>
       {/* SIDEBAR NAVIGATION */}
       <nav style={styles.sidebar} className="glass-panel">
         <div onClick={() => setView('DASHBOARD')} style={styles.logo} className="running-indicator">N</div>
@@ -298,11 +349,19 @@ function App() {
           </button>
         </div>
       </aside>
+        </>
+      )}
     </div>
   );
 }
 
 const styles = {
+  loadingScreen: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#020408', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999 },
+  loadingSpinner: { width: '60px', height: '60px', border: '4px solid rgba(59, 130, 246, 0.1)', borderTop: '4px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' },
+  loadingTitle: { fontSize: '24px', fontWeight: '700', marginTop: '30px', color: 'white', letterSpacing: '2px' },
+  loadingTip: { fontSize: '14px', color: '#94a3b8', marginTop: '15px', maxWidth: '400px', textAlign: 'center', fontStyle: 'italic', minHeight: '40px' },
+  loadingProgress: { width: '200px', height: '4px', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: '2px', marginTop: '25px', overflow: 'hidden' },
+  progressBar: { width: '100%', height: '100%', backgroundColor: '#3b82f6', animation: 'progress 1.5s ease-in-out infinite' },
   container: { display: 'flex', height: '100vh', width: '100vw', backgroundColor: '#020408', color: 'white', overflow: 'hidden' },
   sidebar: { width: '70px', borderRight: '1px solid #1e293b', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px 0' },
   logo: { width: '40px', height: '40px', backgroundColor: '#3b82f6', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', cursor: 'pointer' },

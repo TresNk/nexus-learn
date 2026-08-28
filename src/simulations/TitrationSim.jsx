@@ -18,39 +18,69 @@ const TitrationSim = ({ settings, isRunning, triggerReset, lazyGuide, eduMode = 
 
         enableWebXR(scene);
 
-        // MVP Placeholder Mesh
-        const glass = new BABYLON.StandardMaterial("glass", scene);
-        glass.diffuseColor = new BABYLON.Color3(0.9, 0.9, 0.9);
-        glass.alpha = 0.3;
+        // PBR Materials for realistic glass rendering
+        const pbrGlass = new BABYLON.PBRMaterial("pbrGlass", scene);
+        pbrGlass.alpha = 0.3;
+        pbrGlass.refractionIntensity = 1.0;
+        pbrGlass.refractionIndex = 1.5; // IOR for glass
+        pbrGlass.metallic = 0.0;
+        pbrGlass.roughness = 0.05; // Very smooth surface
+        pbrGlass.subSurface.isRefractionEnabled = true;
+        
+        // Environment reflection for realistic glass
+        const hdriTexture = new BABYLON.CubeTexture.CreateFromBase64String(
+            "data:image/png;base64,...", // Would use actual HDRI in production
+            scene
+        );
+        pbrGlass.environmentTexture = hdriTexture;
 
-        const beaker = BABYLON.MeshBuilder.CreateCylinder("beaker", { height: 8, diameter: 6 }, scene);
+        const beaker = BABYLON.MeshBuilder.CreateCylinder("beaker", { height: 8, diameter: 6, tessellation: 32 }, scene);
         beaker.position.y = 4;
-        beaker.material = glass;
+        beaker.material = pbrGlass;
 
-        const liquid = BABYLON.MeshBuilder.CreateCylinder("liquid", { height: 7.8, diameter: 5.8 }, scene);
+        // Liquid with PBR material for accurate color interpolation
+        const liquidPBR = new BABYLON.PBRMaterial("liquidPBR", scene);
+        liquidPBR.alpha = 0.8;
+        liquidPBR.metallic = 0.0;
+        liquidPBR.roughness = 0.3;
+        liquidPBR.subSurface.isRefractionEnabled = true;
+        liquidPBR.refractionIndex = 1.33; // IOR for water-based solution
+
+        const liquid = BABYLON.MeshBuilder.CreateCylinder("liquid", { height: 7.8, diameter: 5.8, tessellation: 32 }, scene);
         liquid.position.y = 4;
-        const liquidMat = new BABYLON.StandardMaterial("liquidMat", scene);
-        liquidMat.diffuseColor = new BABYLON.Color3(0.8, 0.9, 1.0);
-        liquid.material = liquidMat;
+        liquid.material = liquidPBR;
 
-        const tube = BABYLON.MeshBuilder.CreateCylinder("tube", { height: 10, diameter: 1 }, scene);
+        const tube = BABYLON.MeshBuilder.CreateCylinder("tube", { height: 10, diameter: 1, tessellation: 32 }, scene);
         tube.position.y = 14;
-        tube.material = glass;
+        tube.material = pbrGlass;
 
         // Store liquid ref for loop
         const mesh = liquid;
+        const baseColor = new BABYLON.Color3(0.8, 0.9, 1.0); // Clear solution
+        const endpointColor = new BABYLON.Color3(1.0, 0.2, 0.6); // Pink endpoint
 
         engine.runRenderLoop(() => {
             scene.render();
             if (isRunning) {
                 const vol = settings.volume || 50;
-                // Equivalence point at 50, turns pink
-                const intensity = Math.max(0, (vol - 45) / 10);
-                mesh.material.diffuseColor = BABYLON.Color3.Lerp(
-                    new BABYLON.Color3(0.8, 0.9, 1.0),
-                    new BABYLON.Color3(1.0, 0.2, 0.6),
-                    Math.min(1, intensity)
-                );
+                // Gradual pH-based color interpolation (not instant change)
+                // Equivalence point at 50ml, gradual transition from 45-55ml
+                const transitionStart = 45;
+                const transitionEnd = 55;
+                let t = 0;
+                
+                if (vol <= transitionStart) {
+                    t = 0;
+                } else if (vol >= transitionEnd) {
+                    t = 1;
+                } else {
+                    t = (vol - transitionStart) / (transitionEnd - transitionStart);
+                }
+                
+                // Smooth interpolation using cubic easing for natural appearance
+                const smoothT = t * t * (3 - 2 * t);
+                mesh.material.diffuseColor = BABYLON.Color3.Lerp(baseColor, endpointColor, smoothT);
+                mesh.material.emissiveColor = BABYLON.Color3.Lerp(new BABYLON.Color3(0, 0, 0), new BABYLON.Color3(0.1, 0, 0.05), smoothT);
             }
         });
 
